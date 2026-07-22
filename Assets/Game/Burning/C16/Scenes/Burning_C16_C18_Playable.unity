@@ -161,6 +161,7 @@ MonoBehaviour:
   blackHold: 0.75
   lampTurnOnDuration: 0.55
   flickerInterval: {x: 1.2, y: 2.6}
+  nextSceneName: Burning_C19_Playable
 --- !u!114 &341034922
 MonoBehaviour:
   m_ObjectHideFlags: 0

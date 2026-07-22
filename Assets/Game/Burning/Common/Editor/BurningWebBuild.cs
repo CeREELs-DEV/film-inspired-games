@@ -15,6 +15,7 @@ namespace FilmInspiredGames.Burning.Editor
         private const string C14ScenePath = "Assets/Game/Burning/C14/Scenes/Burning_C14_Playable.unity";
         private const string C15ScenePath = "Assets/Game/Burning/C15/Scenes/Burning_C15_Playable.unity";
         private const string C16ScenePath = "Assets/Game/Burning/C16/Scenes/Burning_C16_C18_Playable.unity";
+        private const string C19ScenePath = "Assets/Game/Burning/C19/Scenes/Burning_C19_Playable.unity";
         private const string OutputPath = "Builds/Web";
 
         [MenuItem("Tools/Burning/Build Web for GitHub Pages")]
@@ -29,7 +30,7 @@ namespace FilmInspiredGames.Burning.Editor
             string[] scenes =
             {
                 ScenePath, C06ScenePath, C08ScenePath, C13ScenePath,
-                C14ScenePath, C15ScenePath, C16ScenePath
+                C14ScenePath, C15ScenePath, C16ScenePath, C19ScenePath
             };
 
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);

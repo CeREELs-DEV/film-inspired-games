@@ -47,6 +47,7 @@ namespace FilmInspiredGames.Burning.C16.Editor
             serialized.FindProperty("c17").objectReferenceValue = c17;
             serialized.FindProperty("c18LampOff").objectReferenceValue = c18Off;
             serialized.FindProperty("c18LampOn").objectReferenceValue = c18On;
+            serialized.FindProperty("nextSceneName").stringValue = "Burning_C19_Playable";
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
             EditorSceneManager.SaveScene(scene, ScenePath);

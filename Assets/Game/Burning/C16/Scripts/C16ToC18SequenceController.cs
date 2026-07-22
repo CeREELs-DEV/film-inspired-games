@@ -1,5 +1,7 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 namespace FilmInspiredGames.Burning.C16
 {
@@ -21,8 +23,14 @@ namespace FilmInspiredGames.Burning.C16
         [SerializeField, Min(0.1f)] private float lampTurnOnDuration = 0.55f;
         [SerializeField] private Vector2 flickerInterval = new(1.2f, 2.6f);
 
+        [Header("다음 장면")]
+        [SerializeField] private string nextSceneName = "Burning_C19_Playable";
+
         public string CurrentChapter { get; private set; } = "C16";
         public string CurrentState { get; private set; } = "검은 화면";
+
+        private bool c18Ready;
+        private bool transitionStarted;
 
         private void Start()
         {
@@ -31,6 +39,23 @@ namespace FilmInspiredGames.Burning.C16
             SetAlpha(c18LampOff, 0f);
             SetAlpha(c18LampOn, 0f);
             StartCoroutine(PlaySequence());
+        }
+
+        private void Update()
+        {
+            if (!c18Ready || transitionStarted)
+            {
+                return;
+            }
+
+            bool mousePressed = Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame;
+            bool touchPressed = Touchscreen.current != null
+                && Touchscreen.current.primaryTouch.press.wasPressedThisFrame;
+
+            if (mousePressed || touchPressed)
+            {
+                LoadC19();
+            }
         }
 
         private IEnumerator PlaySequence()
@@ -47,6 +72,21 @@ namespace FilmInspiredGames.Burning.C16
             yield return Fade(c18LampOn, 0f, 1f, lampTurnOnDuration);
             CurrentState = "가로등 깜빡임";
             StartCoroutine(FlickerLamp());
+            c18Ready = true;
+        }
+
+        private void LoadC19()
+        {
+            transitionStarted = true;
+            if (string.IsNullOrWhiteSpace(nextSceneName)
+                || !Application.CanStreamedLevelBeLoaded(nextSceneName))
+            {
+                Debug.LogError($"C19 씬을 불러올 수 없음: {nextSceneName}", this);
+                transitionStarted = false;
+                return;
+            }
+
+            SceneManager.LoadScene(nextSceneName);
         }
 
         private IEnumerator ShowThenBlack(CanvasGroup scene, string chapter)

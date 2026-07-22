@@ -29,6 +29,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Game/Burning/C16/Scenes/Burning_C16_C18_Playable.unity
     guid: 7d4020adea93f594f86165b589abdba8
+  - enabled: 1
+    path: Assets/Game/Burning/C19/Scenes/Burning_C19_Playable.unity
+    guid: 4a5f3a1badf92fb48b4becd9773da977
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0
