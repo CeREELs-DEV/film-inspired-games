@@ -3,7 +3,6 @@
 ## 공통 기준
 
 - 이 프로젝트의 현재 게임 방향은 `docs/game_overview.md` 먼저 확인
-- GameDev 공통 Unity 기준은 `C:\Users\EunbinLee\Documents\Cereels\centient-ai-secretary\docs\gamedev\unity_workflow.md` 우선 확인
 - Claude 세션도 같은 기준을 보도록 repo 루트 `CLAUDE.md`를 함께 유지
 - 이 파일과 `CLAUDE.md` 중 하나를 수정하면 다른 하나도 확인
 

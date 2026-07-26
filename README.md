@@ -25,6 +25,5 @@ film-inspired-games/
 ## 작업 기준
 
 - 게임 정의는 `docs/game_overview.md` 먼저 확인
-- Unity 공통 기준은 `C:\Users\EunbinLee\Documents\Cereels\centient-ai-secretary\docs\gamedev\unity_workflow.md` 확인
 - 런타임 에셋은 `Assets/Game/` 아래 보관
 - 원본과 참고 이미지는 `assets-src/` 아래 보관
