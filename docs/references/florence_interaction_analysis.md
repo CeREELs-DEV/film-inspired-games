@@ -4,11 +4,11 @@
 
 - `버닝`, `양들의 침묵`에서 출발한 짧은 2D 게임의 장면 구성과 손 조작 설계 참고
 - 강한 추리 판정보다 인물 사이의 거리, 불안, 관찰을 직접 느끼게 하는 짧은 상호작용 설계
-- 분석 기준: `C:\Users\EunbinLee\Desktop\florence_chapters` 녹화 20개와 챕터별 장면 모음 이미지
+- 분석 기준: 이전 `C:\Users\EunbinLee\Desktop\florence_chapters` 녹화 20개와 챕터별 장면 모음 이미지
 
 ## 자료 위치
 
-- 원본 녹화: `C:\Users\EunbinLee\Desktop\florence_chapters`
+- 원본 녹화의 이전 위치: `C:\Users\EunbinLee\Desktop\florence_chapters` (현재 저장소에 미포함)
 - 장면 모음 이미지: `assets-src/reference/florence_chapters/contact_sheets/`
 - 장면 모음 이미지는 참고용 원본 자료. Unity `Assets/` 폴더에 넣지 않음.
 
