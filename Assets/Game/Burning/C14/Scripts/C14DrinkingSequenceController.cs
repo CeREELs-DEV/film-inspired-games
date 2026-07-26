@@ -27,6 +27,13 @@ namespace FilmInspiredGames.Burning.C14
         [SerializeField] private Image glass2Liquid;
         [SerializeField, Min(0.2f)] private float fillDuration = 2.4f;
 
+        [Header("길게 누르기 안내")]
+        [SerializeField] private Sprite holdHintSprite;
+        [SerializeField] private Vector2 holdHintSize = new(34f, 90f);
+        [SerializeField, Min(0f)] private float holdHintGap = 58f;
+        [SerializeField, Min(0.1f)] private float holdHintCycleDuration = 2.35f;
+        [SerializeField, Min(0f)] private float holdHintPressDistance = 10f;
+
         [Header("Part 2")]
         [SerializeField] private CanvasGroup part2SojuSet;
         [SerializeField] private CanvasGroup[] part2Images;
@@ -40,6 +47,10 @@ namespace FilmInspiredGames.Burning.C14
         private float bottleFill = 1f;
         private Coroutine sequence;
         private Camera canvasCamera;
+        private CanvasGroup holdHint;
+        private RectTransform holdHintRect;
+        private float holdHintCycleStartedAt;
+        private bool holdHintDismissed;
 
         public string CurrentChapter => "C14";
         public string CurrentPart => stage < Stage.Part2 ? "Part 1" : "Part 2";
@@ -66,6 +77,7 @@ namespace FilmInspiredGames.Burning.C14
             canvasCamera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
                 ? canvas.worldCamera
                 : null;
+            CreateHoldHint();
 
             SetAlpha(couple, 1f);
             SetAlpha(backgroundAfter, 0f);
@@ -94,13 +106,25 @@ namespace FilmInspiredGames.Burning.C14
             if (stage == Stage.FillGlass1 || stage == Stage.FillGlass2)
             {
                 RectTransform activeGlass = stage == Stage.FillGlass1 ? glass1Rect : glass2Rect;
-                if (held && Contains(activeGlass, position))
+                bool holdingGlass = held && Contains(activeGlass, position);
+                if (holdingGlass && !holdHintDismissed)
+                {
+                    holdHintDismissed = true;
+                    SetAlpha(holdHint, 0f);
+                }
+                else if (!holdHintDismissed)
+                {
+                    AnimateHoldHint(activeGlass);
+                }
+                if (holdingGlass)
                 {
                     FillActiveGlass(Time.unscaledDeltaTime / fillDuration);
                 }
 
                 return;
             }
+
+            SetAlpha(holdHint, 0f);
 
             if ((stage == Stage.DrinkGlass1 || stage == Stage.DrinkGlass2) && pressed)
             {
@@ -133,6 +157,7 @@ namespace FilmInspiredGames.Burning.C14
             yield return new WaitForSecondsRealtime(0.25f);
 
             stage = Stage.FillGlass1;
+            holdHintCycleStartedAt = Time.unscaledTime;
             CurrentState = "첫 번째 잔을 누르고 있어 술 채우기";
         }
 
@@ -150,6 +175,7 @@ namespace FilmInspiredGames.Burning.C14
                 return;
             }
 
+            SetAlpha(holdHint, 0f);
             bottleRect.localRotation = Quaternion.identity;
             if (stage == Stage.FillGlass1)
             {
@@ -161,6 +187,88 @@ namespace FilmInspiredGames.Burning.C14
                 stage = Stage.DrinkGlass2;
                 CurrentState = "가득 찬 두 번째 잔을 눌러 마시기";
             }
+        }
+
+        private void CreateHoldHint()
+        {
+            if (holdHintSprite == null || scrollContent == null)
+            {
+                return;
+            }
+
+            GameObject hintObject = new(
+                "HoldGlassHint",
+                typeof(RectTransform),
+                typeof(CanvasRenderer),
+                typeof(Image),
+                typeof(CanvasGroup));
+            holdHintRect = hintObject.GetComponent<RectTransform>();
+            holdHintRect.SetParent(scrollContent, false);
+            holdHintRect.anchorMin = new Vector2(0f, 1f);
+            holdHintRect.anchorMax = new Vector2(0f, 1f);
+            holdHintRect.pivot = new Vector2(0.5f, 0.5f);
+            holdHintRect.sizeDelta = holdHintSize;
+            holdHintRect.SetAsLastSibling();
+
+            Image image = hintObject.GetComponent<Image>();
+            image.sprite = holdHintSprite;
+            image.preserveAspect = true;
+            image.raycastTarget = false;
+
+            holdHint = hintObject.GetComponent<CanvasGroup>();
+            holdHint.alpha = 0f;
+            holdHint.interactable = false;
+            holdHint.blocksRaycasts = false;
+            holdHintCycleStartedAt = Time.unscaledTime;
+        }
+
+        private void AnimateHoldHint(RectTransform activeGlass)
+        {
+            if (holdHint == null || holdHintRect == null || activeGlass == null)
+            {
+                return;
+            }
+
+            Vector2 restPosition = activeGlass.anchoredPosition
+                + Vector2.up * (activeGlass.rect.height * 0.5f + holdHintGap);
+            float elapsed = Mathf.Repeat(
+                Time.unscaledTime - holdHintCycleStartedAt,
+                Mathf.Max(0.1f, holdHintCycleDuration));
+            float descendEnd = holdHintCycleDuration * 0.18f;
+            float pressEnd = holdHintCycleDuration * 0.62f;
+            float fadeEnd = holdHintCycleDuration * 0.74f;
+
+            if (elapsed < descendEnd)
+            {
+                float t = EaseOut(elapsed / descendEnd);
+                holdHint.alpha = t;
+                holdHintRect.anchoredPosition = restPosition + Vector2.down * (holdHintPressDistance * t);
+                holdHintRect.localScale = Vector3.one;
+                return;
+            }
+
+            if (elapsed < pressEnd)
+            {
+                float pulse = (Mathf.Sin((elapsed - descendEnd) * 8f) + 1f) * 0.5f;
+                holdHint.alpha = Mathf.Lerp(0.82f, 1f, pulse);
+                holdHintRect.anchoredPosition = restPosition + Vector2.down * holdHintPressDistance;
+                holdHintRect.localScale = new Vector3(1.04f, Mathf.Lerp(0.88f, 0.93f, pulse), 1f);
+                return;
+            }
+
+            if (elapsed < fadeEnd)
+            {
+                float t = EaseInOut(Mathf.InverseLerp(pressEnd, fadeEnd, elapsed));
+                holdHint.alpha = 1f - t;
+                holdHintRect.anchoredPosition = restPosition
+                    + Vector2.down * Mathf.Lerp(holdHintPressDistance, 0f, t);
+                holdHintRect.localScale = Vector3.one;
+                return;
+            }
+
+            holdHint.alpha = 0f;
+            holdHintRect.anchoredPosition = restPosition;
+            holdHintRect.localScale = Vector3.one;
         }
 
         private IEnumerator DrinkActiveGlass()
@@ -191,6 +299,7 @@ namespace FilmInspiredGames.Burning.C14
             if (first)
             {
                 stage = Stage.FillGlass2;
+                holdHintCycleStartedAt = Time.unscaledTime;
                 CurrentState = "두 번째 잔을 누르고 있어 술 채우기";
                 sequence = null;
                 yield break;
@@ -219,6 +328,7 @@ namespace FilmInspiredGames.Burning.C14
             stage = Stage.Complete;
             CurrentState = "C14 완료";
             yield return new WaitForSecondsRealtime(0.55f);
+            yield return BurningContinuePrompt.WaitForContinue();
             yield return TransitionToC15();
             sequence = null;
         }
@@ -227,8 +337,13 @@ namespace FilmInspiredGames.Burning.C14
         {
             CurrentState = "검은 화면으로 전환";
             CanvasGroup overlay = CreateBlackOverlay();
-            yield return Fade(overlay, 0f, 1f, transitionToBlackDuration);
-            yield return new WaitForSecondsRealtime(0.35f);
+            BurningChapterSettings.ResolvedTiming timing = BurningChapterSettings.Resolve(
+                "C14", "C15", transitionToBlackDuration, 0.35f, 0f);
+            yield return Fade(overlay, 0f, 1f, timing.FadeOutDuration);
+            if (timing.BlackHoldDuration > 0f)
+            {
+                yield return new WaitForSecondsRealtime(timing.BlackHoldDuration);
+            }
 
             if (string.IsNullOrWhiteSpace(nextSceneName)
                 || !Application.CanStreamedLevelBeLoaded(nextSceneName))

@@ -784,6 +784,11 @@ MonoBehaviour:
   advanceButton: {fileID: 395583699}
   switchButton: {fileID: 1334768960}
   revealDuration: 0.65
+  clothesDropDistance: 960
+  clothesDropDuration: 0.4
+  clothesLandingOvershoot: 12
+  clothesSettleDuration: 0.1
+  switchOffHoldDuration: 0.12
 --- !u!114 &1247767775
 MonoBehaviour:
   m_ObjectHideFlags: 0

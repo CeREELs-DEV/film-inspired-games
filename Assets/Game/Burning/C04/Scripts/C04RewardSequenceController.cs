@@ -3,6 +3,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 namespace FilmInspiredGames.Burning.C04
 {
@@ -33,6 +34,8 @@ namespace FilmInspiredGames.Burning.C04
         [SerializeField, Range(0.5f, 1f)] private float capsuleStartScale = 0.84f;
         [SerializeField, Range(0f, 0.2f)] private float capsuleScalePop = 0.075f;
         [SerializeField, Range(0f, 0.1f)] private float capsuleSettleDip = 0.018f;
+        [SerializeField, Min(0f)] private float capsuleDropDistance = 68f;
+        [SerializeField, Range(0f, 0.2f)] private float capsuleLandingSquash = 0.09f;
         [SerializeField, Min(0f)] private float capsuleHold = 0.35f;
 
         [Header("입력 대기")]
@@ -43,6 +46,8 @@ namespace FilmInspiredGames.Burning.C04
         [SerializeField] private Vector2 capsuleHitAreaMax = new(0.86f, 0.72f);
 
         [Header("열림")]
+        [SerializeField, Min(0.01f)] private float openAnticipationDuration = 0.13f;
+        [SerializeField, Range(0f, 0.2f)] private float openAnticipationSquash = 0.1f;
         [SerializeField, Min(0.01f)] private float capsuleOpenDuration = 0.46f;
         [SerializeField] private Vector2 capsuleUpOffset = new(95f, 130f);
         [SerializeField] private Vector2 capsuleDownOffset = new(-70f, -150f);
@@ -53,8 +58,17 @@ namespace FilmInspiredGames.Burning.C04
         [Header("시계")]
         [SerializeField, Min(0f)] private float watchAppearDelay = 0.08f;
         [SerializeField, Min(0.01f)] private float watchFadeDuration = 0.42f;
+        [SerializeField, Range(0.2f, 1f)] private float watchStartScale = 0.56f;
+        [SerializeField, Min(0f)] private float watchRiseDistance = 42f;
+        [SerializeField, Range(0f, 0.25f)] private float watchScalePop = 0.13f;
+        [SerializeField, Range(-20f, 20f)] private float watchStartRotation = -7f;
+        [SerializeField, Min(0.01f)] private float watchSettleDuration = 0.32f;
         [SerializeField, Min(0f)] private float rewardHold = 0.35f;
         [SerializeField] private bool playOnStart = true;
+
+        [Header("단독 씬 진행")]
+        [SerializeField] private string standaloneNextSceneName = "Burning_C06_C07_Playable";
+        [SerializeField, Min(0f)] private float standaloneNextDelay = 0.35f;
 
         [Header("장면 신호")]
         [SerializeField] private UnityEvent onCapsuleAppeared;
@@ -157,7 +171,8 @@ namespace FilmInspiredGames.Burning.C04
             ResetHandle();
             ResetRect(capsuleUpRect, capsuleStartScale);
             ResetRect(capsuleDownRect, capsuleStartScale);
-            ResetRect(watchRect, 1f);
+            ResetRect(watchRect, watchStartScale);
+            SetWatchPose(0f);
             IsWaitingForHandle = false;
             IsWaitingForOpen = false;
             openRequested = false;
@@ -180,6 +195,7 @@ namespace FilmInspiredGames.Burning.C04
             onCapsuleAppeared?.Invoke();
 
             yield return AnimateCapsuleIdleUntilClicked();
+            yield return AnimateOpenAnticipation();
             CurrentState = "캡슐 열리는 중";
             yield return AnimateCapsuleOpening();
             onCapsuleOpened?.Invoke();
@@ -189,12 +205,38 @@ namespace FilmInspiredGames.Burning.C04
                 yield return Fade(watch, watch.alpha, 1f, watchFadeDuration);
             }
 
+            yield return AnimateWatchSettle();
+
             onRewardShown?.Invoke();
             CurrentState = "시계 획득";
             yield return new WaitForSecondsRealtime(rewardHold);
 
-            sequenceRoutine = null;
+            bool hasFlowController = Finished != null;
             Finished?.Invoke();
+
+            if (hasFlowController)
+            {
+                sequenceRoutine = null;
+                yield break;
+            }
+
+            sequenceRoutine = StartCoroutine(LoadStandaloneNextScene());
+        }
+
+        private IEnumerator LoadStandaloneNextScene()
+        {
+            yield return new WaitForSecondsRealtime(standaloneNextDelay);
+            yield return BurningContinuePrompt.WaitForContinue();
+
+            if (string.IsNullOrWhiteSpace(standaloneNextSceneName)
+                || !Application.CanStreamedLevelBeLoaded(standaloneNextSceneName))
+            {
+                Debug.LogError($"C04 다음 씬을 불러올 수 없음: {standaloneNextSceneName}", this);
+                sequenceRoutine = null;
+                yield break;
+            }
+
+            SceneManager.LoadScene(standaloneNextSceneName);
         }
 
         private IEnumerator AnimateHandleUntilTurned()
@@ -297,13 +339,19 @@ namespace FilmInspiredGames.Burning.C04
             {
                 elapsed += Time.unscaledDeltaTime;
                 float normalized = Mathf.Clamp01(elapsed / capsuleAppearDuration);
-                float alpha = EaseOutCubic(normalized);
+                float alpha = EvaluatePopAlpha(normalized);
                 float scale = EvaluateCapsulePop(normalized);
+                float landing = Mathf.Exp(-Mathf.Pow((normalized - 0.68f) / 0.13f, 2f));
+                float stretch = Mathf.Sin(Mathf.Clamp01(normalized / 0.68f) * Mathf.PI) * 0.045f;
+                float scaleX = scale + landing * capsuleLandingSquash;
+                float scaleY = scale + stretch - landing * capsuleLandingSquash * 0.72f;
+                float vertical = EvaluateCapsuleDrop(normalized);
+                float rotation = Mathf.Sin(normalized * Mathf.PI * 2.4f) * (1f - normalized) * 4f;
 
                 SetAlpha(capsuleUp, alpha);
                 SetAlpha(capsuleDown, alpha);
-                SetScale(capsuleUpRect, scale);
-                SetScale(capsuleDownRect, scale);
+                SetCapsulePose(capsuleUpRect, scaleX, scaleY, vertical, rotation);
+                SetCapsulePose(capsuleDownRect, scaleX, scaleY, vertical, rotation);
                 yield return null;
             }
 
@@ -326,15 +374,38 @@ namespace FilmInspiredGames.Burning.C04
                 float pulse = (1f - Mathf.Cos(phase)) * 0.5f;
                 float scale = 1f + pulse * idleScaleAmount;
                 float lift = pulse * idleLiftAmount;
+                float sway = Mathf.Sin(phase) * 1.15f;
 
-                SetIdlePose(capsuleUpRect, scale, lift);
-                SetIdlePose(capsuleDownRect, scale, lift);
+                SetIdlePose(capsuleUpRect, scale, lift, sway);
+                SetIdlePose(capsuleDownRect, scale, lift, sway);
                 yield return null;
             }
 
             IsWaitingForOpen = false;
-            SetIdlePose(capsuleUpRect, 1f, 0f);
-            SetIdlePose(capsuleDownRect, 1f, 0f);
+            SetIdlePose(capsuleUpRect, 1f, 0f, 0f);
+            SetIdlePose(capsuleDownRect, 1f, 0f, 0f);
+        }
+
+        private IEnumerator AnimateOpenAnticipation()
+        {
+            CurrentState = "캡슐 개봉 준비";
+            float elapsed = 0f;
+            while (elapsed < openAnticipationDuration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float normalized = Mathf.Clamp01(elapsed / openAnticipationDuration);
+                float squeeze = Mathf.Sin(normalized * Mathf.PI);
+                float scaleX = 1f + squeeze * openAnticipationSquash;
+                float scaleY = 1f - squeeze * openAnticipationSquash * 0.72f;
+                float drop = -squeeze * 9f;
+
+                SetCapsulePose(capsuleUpRect, scaleX, scaleY, drop, 0f);
+                SetCapsulePose(capsuleDownRect, scaleX, scaleY, drop, 0f);
+                yield return null;
+            }
+
+            SetCapsulePose(capsuleUpRect, 1f, 1f, 0f, 0f);
+            SetCapsulePose(capsuleDownRect, 1f, 1f, 0f, 0f);
         }
 
         private IEnumerator AnimateCapsuleOpening()
@@ -345,19 +416,44 @@ namespace FilmInspiredGames.Burning.C04
             {
                 elapsed += Time.unscaledDeltaTime;
                 float normalized = Mathf.Clamp01(elapsed / capsuleOpenDuration);
-                float movement = EaseOutBack(normalized, 1.35f);
-                float fade = EaseOutCubic(normalized);
+                float movement = EaseOutBack(normalized, 1.7f);
+                float fade = EaseOutCubic(Mathf.InverseLerp(0.12f, 0.78f, normalized));
 
                 AnimateCapsulePiece(capsuleUp, capsuleUpRect, capsuleUpOffset, capsuleUpRotation, movement, fade);
                 AnimateCapsulePiece(capsuleDown, capsuleDownRect, capsuleDownOffset, capsuleDownRotation, movement, fade);
 
                 float watchNormalized = Mathf.Clamp01((elapsed - watchAppearDelay) / watchFadeDuration);
-                SetAlpha(watch, Mathf.SmoothStep(0f, 1f, watchNormalized));
+                SetWatchPose(watchNormalized);
                 yield return null;
             }
 
             AnimateCapsulePiece(capsuleUp, capsuleUpRect, capsuleUpOffset, capsuleUpRotation, 1f, 1f);
             AnimateCapsulePiece(capsuleDown, capsuleDownRect, capsuleDownOffset, capsuleDownRotation, 1f, 1f);
+            SetWatchPose(1f);
+        }
+
+        private IEnumerator AnimateWatchSettle()
+        {
+            if (watchRect == null)
+            {
+                yield break;
+            }
+
+            float elapsed = 0f;
+            while (elapsed < watchSettleDuration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float normalized = Mathf.Clamp01(elapsed / watchSettleDuration);
+                float pulse = Mathf.Sin(normalized * Mathf.PI * 2f) * (1f - normalized);
+                float scale = 1f + pulse * 0.055f;
+                float rotation = pulse * 1.6f;
+                watchRect.localScale = new Vector3(scale, scale, 1f);
+                watchRect.localRotation = Quaternion.Euler(0f, 0f, rotation);
+                yield return null;
+            }
+
+            watchRect.localScale = Vector3.one;
+            watchRect.localRotation = Quaternion.identity;
         }
 
         private float EvaluateCapsulePop(float normalized)
@@ -381,6 +477,44 @@ namespace FilmInspiredGames.Burning.C04
             return Mathf.LerpUnclamped(1f - capsuleSettleDip, 1f, settle);
         }
 
+        private static float EvaluatePopAlpha(float normalized)
+        {
+            if (normalized < 0.1f)
+            {
+                return 0f;
+            }
+
+            if (normalized < 0.38f)
+            {
+                return Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.1f, 0.38f, normalized));
+            }
+
+            if (normalized < 0.56f)
+            {
+                return Mathf.Lerp(1f, 0.82f, Mathf.InverseLerp(0.38f, 0.56f, normalized));
+            }
+
+            if (normalized < 0.72f)
+            {
+                return Mathf.Lerp(0.82f, 1f, Mathf.InverseLerp(0.56f, 0.72f, normalized));
+            }
+
+            return 1f;
+        }
+
+        private float EvaluateCapsuleDrop(float normalized)
+        {
+            const float impactTime = 0.68f;
+            if (normalized < impactTime)
+            {
+                float fall = EaseInCubic(normalized / impactTime);
+                return Mathf.Lerp(capsuleDropDistance, -10f, fall);
+            }
+
+            float rebound = Mathf.Clamp01((normalized - impactTime) / (1f - impactTime));
+            return Mathf.LerpUnclamped(-10f, 0f, EaseOutBack(rebound, 0.55f));
+        }
+
         private void AnimateCapsulePiece(
             CanvasGroup group,
             RectTransform rect,
@@ -398,12 +532,67 @@ namespace FilmInspiredGames.Burning.C04
 
             rect.anchoredPosition = Vector2.LerpUnclamped(Vector2.zero, offset, movement);
             rect.localRotation = Quaternion.Euler(0f, 0f, Mathf.LerpUnclamped(0f, rotation, movement));
+            float scale = 1f + Mathf.Sin(Mathf.Clamp01(movement) * Mathf.PI) * 0.045f;
+            rect.localScale = new Vector3(scale, scale, 1f);
+        }
+
+        private void SetWatchPose(float normalized)
+        {
+            normalized = Mathf.Clamp01(normalized);
+            float movement = EaseOutBack(normalized, 1.4f);
+            float alpha = EvaluateRewardAlpha(normalized);
+            float scale = Mathf.LerpUnclamped(
+                watchStartScale,
+                1f + Mathf.Sin(normalized * Mathf.PI) * watchScalePop,
+                movement);
+
+            SetAlpha(watch, alpha);
+            if (watchRect == null)
+            {
+                return;
+            }
+
+            watchRect.anchoredPosition = new Vector2(0f, Mathf.LerpUnclamped(-watchRiseDistance, 0f, movement));
+            watchRect.localRotation = Quaternion.Euler(
+                0f, 0f, Mathf.LerpUnclamped(watchStartRotation, 0f, EaseOutCubic(normalized)));
+            watchRect.localScale = new Vector3(scale, scale, 1f);
+        }
+
+        private static float EvaluateRewardAlpha(float normalized)
+        {
+            if (normalized < 0.12f)
+            {
+                return 0f;
+            }
+
+            if (normalized < 0.4f)
+            {
+                return Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.12f, 0.4f, normalized));
+            }
+
+            if (normalized < 0.54f)
+            {
+                return Mathf.Lerp(1f, 0.88f, Mathf.InverseLerp(0.4f, 0.54f, normalized));
+            }
+
+            if (normalized < 0.7f)
+            {
+                return Mathf.Lerp(0.88f, 1f, Mathf.InverseLerp(0.54f, 0.7f, normalized));
+            }
+
+            return 1f;
         }
 
         private static float EaseOutCubic(float value)
         {
             float inverse = 1f - Mathf.Clamp01(value);
             return 1f - inverse * inverse * inverse;
+        }
+
+        private static float EaseInCubic(float value)
+        {
+            value = Mathf.Clamp01(value);
+            return value * value * value;
         }
 
         private static float EaseOutBack(float value, float overshoot)
@@ -452,7 +641,7 @@ namespace FilmInspiredGames.Burning.C04
             SetScale(handleRect, 1f);
         }
 
-        private static void SetIdlePose(RectTransform rect, float scale, float lift)
+        private static void SetIdlePose(RectTransform rect, float scale, float lift, float rotation)
         {
             if (rect == null)
             {
@@ -460,7 +649,25 @@ namespace FilmInspiredGames.Burning.C04
             }
 
             rect.anchoredPosition = new Vector2(0f, lift);
+            rect.localRotation = Quaternion.Euler(0f, 0f, rotation);
             SetScale(rect, scale);
+        }
+
+        private static void SetCapsulePose(
+            RectTransform rect,
+            float scaleX,
+            float scaleY,
+            float vertical,
+            float rotation)
+        {
+            if (rect == null)
+            {
+                return;
+            }
+
+            rect.anchoredPosition = new Vector2(0f, vertical);
+            rect.localRotation = Quaternion.Euler(0f, 0f, rotation);
+            rect.localScale = new Vector3(scaleX, scaleY, 1f);
         }
 
         private bool IsInsideCapsule(Vector2 screenPosition)

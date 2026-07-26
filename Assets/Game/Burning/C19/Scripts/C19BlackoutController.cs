@@ -18,6 +18,10 @@ namespace FilmInspiredGames.Burning.C19
 
         [Header("진행")]
         [SerializeField, Min(0.1f)] private float revealDuration = 0.65f;
+        [SerializeField, Min(1f)] private float clothesDropDistance = 960f;
+        [SerializeField, Min(0.1f)] private float clothesDropDuration = 0.4f;
+        [SerializeField, Min(0f)] private float clothesLandingOvershoot = 12f;
+        [SerializeField, Min(0.05f)] private float clothesSettleDuration = 0.1f;
         [SerializeField, Min(0f)] private float switchOffHoldDuration = 0.12f;
 
         public string CurrentChapter => "C19";
@@ -58,7 +62,7 @@ namespace FilmInspiredGames.Burning.C19
 
             if (step == 0)
             {
-                transitionRoutine = StartCoroutine(Reveal(clothes, "바닥의 옷"));
+                transitionRoutine = StartCoroutine(DropClothes());
                 return;
             }
 
@@ -76,6 +80,47 @@ namespace FilmInspiredGames.Burning.C19
             }
 
             transitionRoutine = StartCoroutine(Blackout());
+        }
+
+        private IEnumerator DropClothes()
+        {
+            CurrentState = "옷이 바닥으로 떨어지는 중";
+            RectTransform clothesRect = clothes.GetComponent<RectTransform>();
+            RectTransform canvasRect = clothes.GetComponentInParent<Canvas>()?.GetComponent<RectTransform>();
+            float screenHeight = canvasRect != null ? canvasRect.rect.height : clothesDropDistance;
+            float dropDistance = Mathf.Max(clothesDropDistance, screenHeight);
+            Vector2 restPosition = clothesRect.anchoredPosition;
+            Vector2 startPosition = restPosition + Vector2.up * dropDistance;
+            Vector2 contactPosition = restPosition + Vector2.down * clothesLandingOvershoot;
+
+            clothes.alpha = 0f;
+            clothesRect.anchoredPosition = startPosition;
+            float elapsed = 0f;
+            while (elapsed < clothesDropDuration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = Mathf.Clamp01(elapsed / clothesDropDuration);
+                float fall = t * t * t;
+                clothes.alpha = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0f, 0.12f, t));
+                clothesRect.anchoredPosition = Vector2.LerpUnclamped(startPosition, contactPosition, fall);
+                yield return null;
+            }
+
+            elapsed = 0f;
+            while (elapsed < clothesSettleDuration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = Mathf.Clamp01(elapsed / clothesSettleDuration);
+                float settle = 1f - (1f - t) * (1f - t);
+                clothesRect.anchoredPosition = Vector2.LerpUnclamped(contactPosition, restPosition, settle);
+                yield return null;
+            }
+
+            clothes.alpha = 1f;
+            clothesRect.anchoredPosition = restPosition;
+            CurrentState = "바닥의 옷";
+            step++;
+            transitionRoutine = null;
         }
 
         private IEnumerator Reveal(CanvasGroup group, string state)
@@ -108,7 +153,7 @@ namespace FilmInspiredGames.Burning.C19
             yield return new WaitForSecondsRealtime(switchOffHoldDuration);
 
             SetAlpha(black, 1f);
-            CurrentState = "검은 화면";
+            CurrentState = "검은 화면 / 종료";
             blackoutComplete = true;
             transitionRoutine = null;
         }

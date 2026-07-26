@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace FilmInspiredGames.Burning.C02
@@ -31,6 +32,10 @@ namespace FilmInspiredGames.Burning.C02
         [SerializeField, Min(0f)] private float completionHold = 0.45f;
         [SerializeField, Min(0f)] private float lookDelay = 0.12f;
         [SerializeField] private bool playOnStart = true;
+
+        [Header("단독 씬 진행")]
+        [SerializeField] private string standaloneNextSceneName = "Burning_C04_Playable";
+        [SerializeField, Min(0f)] private float standaloneNextDelay = 0.35f;
 
         [Header("장면 신호")]
         [SerializeField] private UnityEvent onWarehouseShown;
@@ -170,8 +175,32 @@ namespace FilmInspiredGames.Burning.C02
             yield return new WaitForSecondsRealtime(lookDelay);
 
             onJongsuLooksAtCamera?.Invoke();
+            bool hasFlowController = Finished != null;
             Finished?.Invoke();
-            sequenceRoutine = null;
+
+            if (hasFlowController)
+            {
+                sequenceRoutine = null;
+                yield break;
+            }
+
+            sequenceRoutine = StartCoroutine(LoadStandaloneNextScene());
+        }
+
+        private IEnumerator LoadStandaloneNextScene()
+        {
+            yield return new WaitForSecondsRealtime(standaloneNextDelay);
+            yield return BurningContinuePrompt.WaitForContinue();
+
+            if (string.IsNullOrWhiteSpace(standaloneNextSceneName)
+                || !Application.CanStreamedLevelBeLoaded(standaloneNextSceneName))
+            {
+                Debug.LogError($"C02 다음 씬을 불러올 수 없음: {standaloneNextSceneName}", this);
+                sequenceRoutine = null;
+                yield break;
+            }
+
+            SceneManager.LoadScene(standaloneNextSceneName);
         }
 
         private IEnumerator AnimateFrame(

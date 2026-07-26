@@ -44,12 +44,19 @@ namespace FilmInspiredGames.Burning.C15
 
                 if (index == cuts.Length - 1)
                 {
+                    BurningChapterSettings.ResolvedTiming timing = BurningChapterSettings.Resolve(
+                        "C15", "C16", fadeDuration, blackHold, 0.9f);
                     CurrentState = "마지막 컷";
                     yield return new WaitForSecondsRealtime(0.4f);
+                    CurrentState = "C16 이동 대기";
+                    yield return BurningContinuePrompt.WaitForContinue();
                     CurrentState = "검은 화면";
-                    yield return Fade(cut, 1f, 0f, fadeDuration);
+                    yield return Fade(cut, 1f, 0f, timing.FadeOutDuration);
                     SetAlpha(cut, 0f);
-                    yield return new WaitForSecondsRealtime(blackHold);
+                    if (timing.BlackHoldDuration > 0f)
+                    {
+                        yield return new WaitForSecondsRealtime(timing.BlackHoldDuration);
+                    }
 
                     if (string.IsNullOrWhiteSpace(nextSceneName)
                         || !Application.CanStreamedLevelBeLoaded(nextSceneName))

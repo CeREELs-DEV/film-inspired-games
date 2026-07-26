@@ -1,6 +1,5 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
 namespace FilmInspiredGames.Burning.C16
@@ -29,11 +28,18 @@ namespace FilmInspiredGames.Burning.C16
         public string CurrentChapter { get; private set; } = "C16";
         public string CurrentState { get; private set; } = "검은 화면";
 
-        private bool c18Ready;
-        private bool transitionStarted;
+        private int startChapter = 16;
 
         private void Start()
         {
+            string requestedChapter = BurningChapterDebugRequest.Consume();
+            if (requestedChapter.Length == 3
+                && int.TryParse(requestedChapter.Substring(1), out int requestedNumber)
+                && requestedNumber is >= 16 and <= 18)
+            {
+                startChapter = requestedNumber;
+            }
+
             SetAlpha(c16, 0f);
             SetAlpha(c17, 0f);
             SetAlpha(c18LampOff, 0f);
@@ -41,64 +47,96 @@ namespace FilmInspiredGames.Burning.C16
             StartCoroutine(PlaySequence());
         }
 
-        private void Update()
-        {
-            if (!c18Ready || transitionStarted)
-            {
-                return;
-            }
-
-            bool mousePressed = Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame;
-            bool touchPressed = Touchscreen.current != null
-                && Touchscreen.current.primaryTouch.press.wasPressedThisFrame;
-
-            if (mousePressed || touchPressed)
-            {
-                LoadC19();
-            }
-        }
-
         private IEnumerator PlaySequence()
         {
             yield return new WaitForSecondsRealtime(initialBlackHold);
-            yield return ShowThenBlack(c16, "C16");
-            yield return ShowThenBlack(c17, "C17");
+            if (startChapter <= 16)
+            {
+                yield return ShowThenBlack(c16, "C15", "C16", "C17");
+            }
 
+            if (startChapter <= 17)
+            {
+                yield return ShowThenBlack(c17, "C16", "C17", "C18");
+            }
+
+            BurningChapterSettings.ResolvedTiming c17ToC18 = BurningChapterSettings.Resolve(
+                "C17", "C18", fadeDuration, blackHold, fadeDuration);
             CurrentChapter = "C18";
             CurrentState = "가로등 꺼진 골목";
-            yield return Fade(c18LampOff, 0f, 1f, fadeDuration);
+            yield return Fade(c18LampOff, 0f, 1f, c17ToC18.FadeInDuration);
             yield return new WaitForSecondsRealtime(0.65f);
             CurrentState = "가로등 켜짐";
             yield return Fade(c18LampOn, 0f, 1f, lampTurnOnDuration);
             CurrentState = "가로등 깜빡임";
             StartCoroutine(FlickerLamp());
-            c18Ready = true;
+            yield return new WaitForSecondsRealtime(sceneHold);
+            CurrentState = "C19 이동 대기";
+            yield return BurningContinuePrompt.WaitForContinue();
+            yield return LoadC19();
         }
 
-        private void LoadC19()
+        private IEnumerator LoadC19()
         {
-            transitionStarted = true;
             if (string.IsNullOrWhiteSpace(nextSceneName)
                 || !Application.CanStreamedLevelBeLoaded(nextSceneName))
             {
                 Debug.LogError($"C19 씬을 불러올 수 없음: {nextSceneName}", this);
-                transitionStarted = false;
-                return;
+                yield break;
+            }
+
+            BurningChapterSettings.ResolvedTiming timing = BurningChapterSettings.Resolve(
+                "C18", "C19", 0f, 0f, 0f);
+            yield return FadePair(c18LampOff, c18LampOn, timing.FadeOutDuration);
+            if (timing.BlackHoldDuration > 0f)
+            {
+                yield return new WaitForSecondsRealtime(timing.BlackHoldDuration);
             }
 
             SceneManager.LoadScene(nextSceneName);
         }
 
-        private IEnumerator ShowThenBlack(CanvasGroup scene, string chapter)
+        private IEnumerator ShowThenBlack(
+            CanvasGroup scene,
+            string previousChapter,
+            string chapter,
+            string nextChapter)
         {
+            BurningChapterSettings.ResolvedTiming incoming = BurningChapterSettings.Resolve(
+                previousChapter, chapter, fadeDuration, blackHold, fadeDuration);
+            BurningChapterSettings.ResolvedTiming outgoing = BurningChapterSettings.Resolve(
+                chapter, nextChapter, fadeDuration, blackHold, fadeDuration);
             CurrentChapter = chapter;
             CurrentState = $"{chapter} 장면";
-            yield return Fade(scene, 0f, 1f, fadeDuration);
+            yield return Fade(scene, 0f, 1f, incoming.FadeInDuration);
             yield return new WaitForSecondsRealtime(sceneHold);
+            CurrentState = $"{nextChapter} 이동 대기";
+            yield return BurningContinuePrompt.WaitForContinue();
             CurrentState = "검은 화면";
-            yield return Fade(scene, 1f, 0f, fadeDuration);
+            yield return Fade(scene, 1f, 0f, outgoing.FadeOutDuration);
             SetAlpha(scene, 0f);
-            yield return new WaitForSecondsRealtime(blackHold);
+            if (outgoing.BlackHoldDuration > 0f)
+            {
+                yield return new WaitForSecondsRealtime(outgoing.BlackHoldDuration);
+            }
+        }
+
+        private static IEnumerator FadePair(CanvasGroup first, CanvasGroup second, float duration)
+        {
+            float firstStart = first != null ? first.alpha : 0f;
+            float secondStart = second != null ? second.alpha : 0f;
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(elapsed / duration));
+                SetAlpha(first, Mathf.LerpUnclamped(firstStart, 0f, t));
+                SetAlpha(second, Mathf.LerpUnclamped(secondStart, 0f, t));
+                yield return null;
+            }
+
+            SetAlpha(first, 0f);
+            SetAlpha(second, 0f);
         }
 
         private IEnumerator FlickerLamp()

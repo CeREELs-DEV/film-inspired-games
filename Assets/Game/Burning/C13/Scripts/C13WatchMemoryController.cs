@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 namespace FilmInspiredGames.Burning.C13
 {
@@ -11,8 +12,17 @@ namespace FilmInspiredGames.Burning.C13
         [SerializeField] private RectTransform minuteHand;
         [SerializeField] private RectTransform hourHand;
         [SerializeField] private RectTransform watchCenter;
+        [SerializeField] private Sprite rotateHintSprite;
+        [SerializeField] private Vector2 rotateHintPosition = new(292f, -138f);
+        [SerializeField] private Vector2 rotateHintSize = new(64f, 64f);
+        [SerializeField] private float rotateHintAngle;
+        [SerializeField, Range(0.5f, 1f)] private float rotateHintMaxFill = 0.93f;
         [SerializeField, Min(1f)] private float interactionRadius = 115f;
         [SerializeField, Min(1f)] private float finalRotation = 1350f;
+        [SerializeField, Min(0.1f)] private float rotateHintDrawDuration = 1.15f;
+        [SerializeField, Min(0f)] private float rotateHintHoldDuration = 0.25f;
+        [SerializeField, Min(0.1f)] private float rotateHintFadeDuration = 0.2f;
+        [SerializeField, Min(0f)] private float rotateHintPauseDuration = 1f;
 
         [Header("기억 이미지")]
         [SerializeField] private CanvasGroup walkImage;
@@ -35,6 +45,11 @@ namespace FilmInspiredGames.Burning.C13
         private float accumulatedRotation;
         private Camera canvasCamera;
         private bool transitioning;
+        private CanvasGroup rotateHint;
+        private RectTransform rotateHintRect;
+        private Image rotateHintImage;
+        private float rotateHintCycleStartedAt;
+        private bool continuePromptShown;
 
         public string CurrentChapter => "C13";
         public string CurrentState { get; private set; } = "시곗바늘을 돌려 기억 탐색";
@@ -42,11 +57,55 @@ namespace FilmInspiredGames.Burning.C13
 
         private void Start()
         {
+            CreateRotateHint();
             Canvas canvas = GetComponentInParent<Canvas>();
             canvasCamera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
                 ? canvas.worldCamera
                 : null;
             ApplyVisuals();
+            SetRotateHintVisible(true);
+        }
+
+        private void CreateRotateHint()
+        {
+            if (rotateHintSprite == null || rotateHint != null)
+            {
+                return;
+            }
+
+            GameObject hintObject = new(
+                "RotateHint",
+                typeof(RectTransform),
+                typeof(CanvasRenderer),
+                typeof(Image),
+                typeof(CanvasGroup));
+            rotateHintRect = hintObject.GetComponent<RectTransform>();
+            rotateHintRect.SetParent(transform, false);
+            rotateHintRect.anchorMin = new Vector2(0f, 1f);
+            rotateHintRect.anchorMax = new Vector2(0f, 1f);
+            rotateHintRect.pivot = new Vector2(0.5f, 0.5f);
+            rotateHintRect.anchoredPosition = rotateHintPosition;
+            rotateHintRect.sizeDelta = rotateHintSize;
+
+            Image image = hintObject.GetComponent<Image>();
+            image.sprite = rotateHintSprite;
+            image.preserveAspect = true;
+            image.raycastTarget = false;
+            image.type = Image.Type.Filled;
+            image.fillMethod = Image.FillMethod.Radial360;
+            image.fillOrigin = (int)Image.Origin360.Top;
+            image.fillClockwise = true;
+            image.fillAmount = 0f;
+            rotateHintImage = image;
+
+            rotateHint = hintObject.GetComponent<CanvasGroup>();
+            rotateHint.interactable = false;
+            rotateHint.blocksRaycasts = false;
+
+            if (transitionOverlay != null)
+            {
+                rotateHintRect.SetSiblingIndex(transitionOverlay.transform.GetSiblingIndex());
+            }
         }
 
         private void Update()
@@ -71,20 +130,15 @@ namespace FilmInspiredGames.Burning.C13
                 released = Mouse.current.leftButton.wasReleasedThisFrame;
             }
 
-            if (pressed && IsNearWatch(pointerPosition))
+            bool rotationComplete = accumulatedRotation >= finalRotation;
+
+            if (pressed && !rotationComplete && IsNearWatch(pointerPosition))
             {
                 dragging = true;
-                hasInteracted = true;
                 previousPointerAngle = PointerAngle(pointerPosition);
-                ApplyVisuals();
             }
 
-            if (pressed && accumulatedRotation >= finalRotation && !dragging && !transitioning)
-            {
-                StartCoroutine(LoadNextScene());
-            }
-
-            if (dragging && held)
+            if (dragging && held && !rotationComplete)
             {
                 float angle = PointerAngle(pointerPosition);
                 float delta = Mathf.DeltaAngle(previousPointerAngle, angle);
@@ -92,8 +146,20 @@ namespace FilmInspiredGames.Burning.C13
 
                 if (Mathf.Abs(delta) < 50f)
                 {
-                    accumulatedRotation = Mathf.Clamp(
+                    float nextRotation = Mathf.Clamp(
                         accumulatedRotation - delta, 0f, finalRotation);
+                    if (!hasInteracted && Mathf.Abs(nextRotation - accumulatedRotation) > 0.1f)
+                    {
+                        hasInteracted = true;
+                        SetRotateHintVisible(false);
+                    }
+
+                    accumulatedRotation = nextRotation;
+                    if (accumulatedRotation >= finalRotation)
+                    {
+                        accumulatedRotation = finalRotation;
+                        dragging = false;
+                    }
                     ApplyVisuals();
                 }
             }
@@ -103,10 +169,82 @@ namespace FilmInspiredGames.Burning.C13
                 dragging = false;
             }
 
-            if (!hasInteracted && minuteHand != null)
+            if (!hasInteracted && accumulatedRotation < finalRotation)
             {
-                float hint = Mathf.Sin(Time.unscaledTime * 2.8f) * 5f;
-                minuteHand.localRotation = Quaternion.Euler(0f, 0f, hint);
+                if (minuteHand != null)
+                {
+                    float hint = Mathf.Sin(Time.unscaledTime * 2.8f) * 5f;
+                    minuteHand.localRotation = Quaternion.Euler(0f, 0f, hint);
+                }
+
+                AnimateRotateHint();
+            }
+
+            if (rotationComplete && !continuePromptShown && !transitioning)
+            {
+                continuePromptShown = true;
+                BurningContinuePrompt.Show(() => StartCoroutine(LoadNextScene()));
+            }
+        }
+
+        private void AnimateRotateHint()
+        {
+            if (rotateHint == null || rotateHintRect == null || rotateHintImage == null)
+            {
+                return;
+            }
+
+            float cycleDuration = rotateHintDrawDuration
+                + rotateHintHoldDuration
+                + rotateHintFadeDuration
+                + rotateHintPauseDuration;
+            float elapsed = Mathf.Repeat(Time.unscaledTime - rotateHintCycleStartedAt, cycleDuration);
+
+            rotateHintRect.localScale = Vector3.one;
+            rotateHintRect.localRotation = Quaternion.Euler(0f, 0f, rotateHintAngle);
+
+            if (elapsed < rotateHintDrawDuration)
+            {
+                float t = Mathf.SmoothStep(0f, 1f, elapsed / rotateHintDrawDuration);
+                rotateHintImage.fillAmount = t * rotateHintMaxFill;
+                rotateHint.alpha = 1f;
+                return;
+            }
+
+            elapsed -= rotateHintDrawDuration;
+            rotateHintImage.fillAmount = rotateHintMaxFill;
+            if (elapsed < rotateHintHoldDuration)
+            {
+                rotateHint.alpha = 1f;
+                return;
+            }
+
+            elapsed -= rotateHintHoldDuration;
+            if (elapsed < rotateHintFadeDuration)
+            {
+                rotateHint.alpha = 1f - Mathf.SmoothStep(0f, 1f, elapsed / rotateHintFadeDuration);
+                return;
+            }
+
+            rotateHint.alpha = 0f;
+            rotateHintImage.fillAmount = 0f;
+        }
+
+        private void SetRotateHintVisible(bool visible)
+        {
+            SetAlpha(rotateHint, 0f);
+            if (rotateHintImage != null)
+            {
+                rotateHintImage.fillAmount = 0f;
+            }
+            if (rotateHintRect != null)
+            {
+                rotateHintRect.localScale = Vector3.one;
+                rotateHintRect.localRotation = Quaternion.Euler(0f, 0f, rotateHintAngle);
+            }
+            if (visible)
+            {
+                rotateHintCycleStartedAt = Time.unscaledTime;
             }
         }
 
@@ -163,7 +301,7 @@ namespace FilmInspiredGames.Burning.C13
                 < 1080f => "멈춘 발걸음",
                 < 1170f => "멈춤 표시 첫 번째",
                 < 1350f => "멈춤 표시 두 번째",
-                _ => "봉천동 포차 / 클릭하여 C14 이동"
+                _ => "봉천동 포차 / C14 이동 대기"
             };
         }
 
@@ -171,16 +309,23 @@ namespace FilmInspiredGames.Burning.C13
         {
             transitioning = true;
             CurrentState = "C14로 전환";
+            BurningChapterSettings.ResolvedTiming timing = BurningChapterSettings.Resolve(
+                "C13", "C14", transitionDuration, 0f, 0f);
             float elapsed = 0f;
-            while (elapsed < transitionDuration)
+            while (elapsed < timing.FadeOutDuration)
             {
                 elapsed += Time.unscaledDeltaTime;
                 if (transitionOverlay != null)
                 {
-                    float t = Mathf.Clamp01(elapsed / transitionDuration);
+                    float t = Mathf.Clamp01(elapsed / timing.FadeOutDuration);
                     transitionOverlay.alpha = t * t * (3f - 2f * t);
                 }
                 yield return null;
+            }
+
+            if (timing.BlackHoldDuration > 0f)
+            {
+                yield return new WaitForSecondsRealtime(timing.BlackHoldDuration);
             }
 
             SceneManager.LoadScene(nextSceneName);

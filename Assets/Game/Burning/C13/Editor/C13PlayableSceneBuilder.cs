@@ -63,6 +63,7 @@ namespace FilmInspiredGames.Burning.C13.Editor
             Set(serialized, "minuteHand", minute.rectTransform);
             Set(serialized, "hourHand", hour.rectTransform);
             Set(serialized, "watchCenter", watchCenter);
+            Set(serialized, "rotateHintSprite", LoadSprite("C13_RotateHint.png"));
             Set(serialized, "walkImage", walk);
             Set(serialized, "glance1Image", glance1);
             Set(serialized, "glance2Image", glance2);
@@ -219,7 +220,11 @@ namespace FilmInspiredGames.Burning.C13.Editor
                 importer.spriteImportMode = SpriteImportMode.Single;
                 importer.alphaIsTransparency = true;
                 importer.mipmapEnabled = false;
-                importer.maxTextureSize = path.Contains("Hand.png") || path.Contains("Mark") ? 512 : 4096;
+                importer.maxTextureSize = path.Contains("Hand.png")
+                    || path.Contains("Mark")
+                    || path.Contains("Hint")
+                    ? 512
+                    : 4096;
                 importer.SaveAndReimport();
             }
         }

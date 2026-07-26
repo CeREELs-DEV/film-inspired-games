@@ -85,6 +85,7 @@ namespace FilmInspiredGames.Burning.C14.Editor
             Set(serialized, "bottleLiquid", bottle.Liquid);
             Set(serialized, "glass1Liquid", glass1.Liquid);
             Set(serialized, "glass2Liquid", glass2.Liquid);
+            Set(serialized, "holdHintSprite", LoadPart1("C14_HoldHint.png"));
             Set(serialized, "part2SojuSet", part2Set);
             serialized.FindProperty("nextSceneName").stringValue = "Burning_C15_Playable";
             serialized.FindProperty("transitionToBlackDuration").floatValue = 1.1f;

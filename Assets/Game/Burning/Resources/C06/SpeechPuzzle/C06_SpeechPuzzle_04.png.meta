@@ -1,0 +1,806 @@
+fileFormatVersion: 2
+guid: 5bcf8898a6cb87a4ebde386c266b0da4
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -6639568344907777565
+    second: C06_SpeechPuzzle_04_0
+  - first:
+      213: -2605248987382547364
+    second: C06_SpeechPuzzle_04_1
+  - first:
+      213: 7208709553138532411
+    second: C06_SpeechPuzzle_04_2
+  - first:
+      213: 3507382634876514782
+    second: C06_SpeechPuzzle_04_3
+  - first:
+      213: -5838574724497244660
+    second: C06_SpeechPuzzle_04_4
+  - first:
+      213: -7033374755692359264
+    second: C06_SpeechPuzzle_04_5
+  - first:
+      213: 3239913307018052650
+    second: C06_SpeechPuzzle_04_6
+  - first:
+      213: 5247034666849379313
+    second: C06_SpeechPuzzle_04_7
+  - first:
+      213: -8178019658768296095
+    second: C06_SpeechPuzzle_04_8
+  - first:
+      213: -4456416477482828686
+    second: C06_SpeechPuzzle_04_9
+  - first:
+      213: 5068704863178973067
+    second: C06_SpeechPuzzle_04_10
+  - first:
+      213: -5527089530740236095
+    second: C06_SpeechPuzzle_04_11
+  - first:
+      213: 5328623114783806388
+    second: C06_SpeechPuzzle_04_12
+  - first:
+      213: 1521297946164703117
+    second: C06_SpeechPuzzle_04_13
+  - first:
+      213: 4641469537304680729
+    second: C06_SpeechPuzzle_04_14
+  - first:
+      213: -348906157650658919
+    second: C06_SpeechPuzzle_04_15
+  - first:
+      213: -7712087380377110639
+    second: C06_SpeechPuzzle_04_16
+  - first:
+      213: -2181366189160056254
+    second: C06_SpeechPuzzle_04_17
+  - first:
+      213: -6859350197366545555
+    second: C06_SpeechPuzzle_04_18
+  - first:
+      213: -4598618614634130231
+    second: C06_SpeechPuzzle_04_19
+  - first:
+      213: -4996759297428160478
+    second: C06_SpeechPuzzle_04_20
+  - first:
+      213: -4700863232762354472
+    second: C06_SpeechPuzzle_04_21
+  - first:
+      213: 8132696982975312399
+    second: C06_SpeechPuzzle_04_22
+  - first:
+      213: -654070995296942647
+    second: C06_SpeechPuzzle_04_23
+  - first:
+      213: -2153182408202009751
+    second: C06_SpeechPuzzle_04_24
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: iOS
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: C06_SpeechPuzzle_04_0
+      rect:
+        serializedVersion: 2
+        x: 116
+        y: 107
+        width: 22
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3e9f7dba4c38bd3a0800000000000000
+      internalID: -6639568344907777565
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: C06_SpeechPuzzle_04_1
+      rect:
+        serializedVersion: 2
+        x: 131
+        y: 120
+        width: 24
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c5cfd9369db48dbd0800000000000000
+      internalID: -2605248987382547364
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: C06_SpeechPuzzle_04_2
+      rect:
+        serializedVersion: 2
+        x: 153
+        y: 108
+        width: 20
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b3089cb252b7a0460800000000000000
+      internalID: 7208709553138532411
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: C06_SpeechPuzzle_04_3
+      rect:
+        serializedVersion: 2
+        x: 22
+        y: 97
+        width: 24
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ed1303b6ce9bca030800000000000000
+      internalID: 3507382634876514782
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: C06_SpeechPuzzle_04_4
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 106
+        width: 22
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c0e74cfd83739fea0800000000000000
+      internalID: -5838574724497244660
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: C06_SpeechPuzzle_04_5
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 106
+        width: 21
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0a1d1c29cee646e90800000000000000
+      internalID: -7033374755692359264
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: C06_SpeechPuzzle_04_6
+      rect:
+        serializedVersion: 2
+        x: 94
+        y: 106
+        width: 20
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a244fd7acfb76fc20800000000000000
+      internalID: 3239913307018052650
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: C06_SpeechPuzzle_04_7
+      rect:
+        serializedVersion: 2
+        x: 172
+        y: 106
+        width: 21
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1f3a7b1ca3631d840800000000000000
+      internalID: 5247034666849379313
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: C06_SpeechPuzzle_04_8
+      rect:
+        serializedVersion: 2
+        x: 196
+        y: 106
+        width: 24
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 16754f80376d18e80800000000000000
+      internalID: -8178019658768296095
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: C06_SpeechPuzzle_04_9
+      rect:
+        serializedVersion: 2
+        x: 221
+        y: 106
+        width: 24
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 27c307823d0a722c0800000000000000
+      internalID: -4456416477482828686
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: C06_SpeechPuzzle_04_10
+      rect:
+        serializedVersion: 2
+        x: 247
+        y: 106
+        width: 22
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b8fd319c738a75640800000000000000
+      internalID: 5068704863178973067
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: C06_SpeechPuzzle_04_11
+      rect:
+        serializedVersion: 2
+        x: 273
+        y: 106
+        width: 23
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1c0a2760b55db43b0800000000000000
+      internalID: -5527089530740236095
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: C06_SpeechPuzzle_04_12
+      rect:
+        serializedVersion: 2
+        x: 297
+        y: 106
+        width: 21
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4b3df9a9d7213f940800000000000000
+      internalID: 5328623114783806388
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: C06_SpeechPuzzle_04_13
+      rect:
+        serializedVersion: 2
+        x: 320
+        y: 106
+        width: 23
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d8fadaefb6cbc1510800000000000000
+      internalID: 1521297946164703117
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: C06_SpeechPuzzle_04_14
+      rect:
+        serializedVersion: 2
+        x: 346
+        y: 84
+        width: 28
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 91997ded3ffc96040800000000000000
+      internalID: 4641469537304680729
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: C06_SpeechPuzzle_04_15
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 50
+        width: 33
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 999394db2bf682bf0800000000000000
+      internalID: -348906157650658919
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: C06_SpeechPuzzle_04_16
+      rect:
+        serializedVersion: 2
+        x: 10
+        y: 78
+        width: 23
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 19779df436929f490800000000000000
+      internalID: -7712087380377110639
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: C06_SpeechPuzzle_04_17
+      rect:
+        serializedVersion: 2
+        x: 266
+        y: 14
+        width: 56
+        height: 65
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 24a3112220b3ab1e0800000000000000
+      internalID: -2181366189160056254
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: C06_SpeechPuzzle_04_18
+      rect:
+        serializedVersion: 2
+        x: 315
+        y: 65
+        width: 40
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d6326ff7651bec0a0800000000000000
+      internalID: -6859350197366545555
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: C06_SpeechPuzzle_04_19
+      rect:
+        serializedVersion: 2
+        x: 26
+        y: 57
+        width: 41
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9c4db390cbc6e20c0800000000000000
+      internalID: -4598618614634130231
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: C06_SpeechPuzzle_04_20
+      rect:
+        serializedVersion: 2
+        x: 69
+        y: 56
+        width: 54
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2200aa894e1f7aab0800000000000000
+      internalID: -4996759297428160478
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: C06_SpeechPuzzle_04_21
+      rect:
+        serializedVersion: 2
+        x: 125
+        y: 56
+        width: 58
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8d46189cbcd23ceb0800000000000000
+      internalID: -4700863232762354472
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: C06_SpeechPuzzle_04_22
+      rect:
+        serializedVersion: 2
+        x: 184
+        y: 35
+        width: 87
+        height: 40
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f02722031d42dd070800000000000000
+      internalID: 8132696982975312399
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: C06_SpeechPuzzle_04_23
+      rect:
+        serializedVersion: 2
+        x: 22
+        y: 32
+        width: 13
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9c5807b25e54ce6f0800000000000000
+      internalID: -654070995296942647
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: C06_SpeechPuzzle_04_24
+      rect:
+        serializedVersion: 2
+        x: 22
+        y: 13
+        width: 13
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 963cf7ef10c5e12e0800000000000000
+      internalID: -2153182408202009751
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      C06_SpeechPuzzle_04_0: -6639568344907777565
+      C06_SpeechPuzzle_04_1: -2605248987382547364
+      C06_SpeechPuzzle_04_10: 5068704863178973067
+      C06_SpeechPuzzle_04_11: -5527089530740236095
+      C06_SpeechPuzzle_04_12: 5328623114783806388
+      C06_SpeechPuzzle_04_13: 1521297946164703117
+      C06_SpeechPuzzle_04_14: 4641469537304680729
+      C06_SpeechPuzzle_04_15: -348906157650658919
+      C06_SpeechPuzzle_04_16: -7712087380377110639
+      C06_SpeechPuzzle_04_17: -2181366189160056254
+      C06_SpeechPuzzle_04_18: -6859350197366545555
+      C06_SpeechPuzzle_04_19: -4598618614634130231
+      C06_SpeechPuzzle_04_2: 7208709553138532411
+      C06_SpeechPuzzle_04_20: -4996759297428160478
+      C06_SpeechPuzzle_04_21: -4700863232762354472
+      C06_SpeechPuzzle_04_22: 8132696982975312399
+      C06_SpeechPuzzle_04_23: -654070995296942647
+      C06_SpeechPuzzle_04_24: -2153182408202009751
+      C06_SpeechPuzzle_04_3: 3507382634876514782
+      C06_SpeechPuzzle_04_4: -5838574724497244660
+      C06_SpeechPuzzle_04_5: -7033374755692359264
+      C06_SpeechPuzzle_04_6: 3239913307018052650
+      C06_SpeechPuzzle_04_7: 5247034666849379313
+      C06_SpeechPuzzle_04_8: -8178019658768296095
+      C06_SpeechPuzzle_04_9: -4456416477482828686
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

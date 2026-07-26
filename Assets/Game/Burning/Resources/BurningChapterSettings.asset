@@ -1,0 +1,100 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8af39f765c414831985008557b9a3876, type: 3}
+  m_Name: BurningChapterSettings
+  m_EditorClassIdentifier: 
+  transitions:
+  - fromChapter: C01
+    toChapter: C02
+    fadeOutDuration: 0.65
+    blackHoldDuration: 0.18
+    fadeInDuration: 0.8
+  - fromChapter: C02
+    toChapter: C03
+    fadeOutDuration: 0.65
+    blackHoldDuration: 0.18
+    fadeInDuration: 0.8
+  - fromChapter: C03
+    toChapter: C04
+    fadeOutDuration: 0.65
+    blackHoldDuration: 0.18
+    fadeInDuration: 0.8
+  - fromChapter: C04
+    toChapter: C06
+    fadeOutDuration: 0.65
+    blackHoldDuration: 0.18
+    fadeInDuration: 0.8
+  - fromChapter: C06
+    toChapter: C07
+    fadeOutDuration: 0.65
+    blackHoldDuration: 0.18
+    fadeInDuration: 0.8
+  - fromChapter: C07
+    toChapter: C08
+    fadeOutDuration: 0.65
+    blackHoldDuration: 0.18
+    fadeInDuration: 0.8
+  - fromChapter: C08
+    toChapter: C09
+    fadeOutDuration: 0.65
+    blackHoldDuration: 0.18
+    fadeInDuration: 0.8
+  - fromChapter: C09
+    toChapter: C10
+    fadeOutDuration: 0.65
+    blackHoldDuration: 0.18
+    fadeInDuration: 0.8
+  - fromChapter: C10
+    toChapter: C11
+    fadeOutDuration: 0.65
+    blackHoldDuration: 0.18
+    fadeInDuration: 0.8
+  - fromChapter: C11
+    toChapter: C12
+    fadeOutDuration: 0.65
+    blackHoldDuration: 0.18
+    fadeInDuration: 0.8
+  - fromChapter: C12
+    toChapter: C13
+    fadeOutDuration: 0.65
+    blackHoldDuration: 0.18
+    fadeInDuration: 0.8
+  - fromChapter: C13
+    toChapter: C14
+    fadeOutDuration: 0.65
+    blackHoldDuration: 0.18
+    fadeInDuration: 0.8
+  - fromChapter: C14
+    toChapter: C15
+    fadeOutDuration: 0.65
+    blackHoldDuration: 0.18
+    fadeInDuration: 0.8
+  - fromChapter: C15
+    toChapter: C16
+    fadeOutDuration: 0.65
+    blackHoldDuration: 0.18
+    fadeInDuration: 0.8
+  - fromChapter: C16
+    toChapter: C17
+    fadeOutDuration: 0.65
+    blackHoldDuration: 0.18
+    fadeInDuration: 0.8
+  - fromChapter: C17
+    toChapter: C18
+    fadeOutDuration: 0.65
+    blackHoldDuration: 0.18
+    fadeInDuration: 0.8
+  - fromChapter: C18
+    toChapter: C19
+    fadeOutDuration: 0.65
+    blackHoldDuration: 0.18
+    fadeInDuration: 0.8

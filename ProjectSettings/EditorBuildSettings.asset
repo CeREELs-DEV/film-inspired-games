@@ -12,6 +12,9 @@ EditorBuildSettings:
     path: Assets/Game/Burning/C02/Scenes/Burning_C02_Playable.unity
     guid: 734c972f4057f3640b1cfbf748143ac8
   - enabled: 1
+    path: Assets/Game/Burning/C04/Scenes/Burning_C04_Playable.unity
+    guid: 41974dd4bf5874d4abf7e7e97f98a56e
+  - enabled: 1
     path: Assets/Game/Burning/C06/Scenes/Burning_C06_C07_Playable.unity
     guid: ebf6a918bdbf1bc4d94cbd3dc64f7bb8
   - enabled: 1

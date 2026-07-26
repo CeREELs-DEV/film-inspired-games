@@ -59,6 +59,10 @@ namespace FilmInspiredGames.Burning.C19.Editor
             serialized.FindProperty("black").objectReferenceValue = black;
             serialized.FindProperty("advanceButton").objectReferenceValue = advanceButton;
             serialized.FindProperty("switchButton").objectReferenceValue = switchButton;
+            serialized.FindProperty("clothesDropDistance").floatValue = 960f;
+            serialized.FindProperty("clothesDropDuration").floatValue = 0.4f;
+            serialized.FindProperty("clothesLandingOvershoot").floatValue = 12f;
+            serialized.FindProperty("clothesSettleDuration").floatValue = 0.1f;
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
             EditorSceneManager.SaveScene(scene, ScenePath);

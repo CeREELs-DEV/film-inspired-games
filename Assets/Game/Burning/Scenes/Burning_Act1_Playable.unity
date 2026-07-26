@@ -1170,7 +1170,7 @@ MonoBehaviour:
   - {fileID: 1293552561}
   - {fileID: 1328845521}
   - {fileID: 2089030113}
-  requiredPlacementOverlap: 0.9
+  requiredPlacementOverlap: 0.8
   fitBoxToSlot: 0
   preserveLayerAlignment: 1
   alignedTargetPosition: {x: -324.25, y: 0}

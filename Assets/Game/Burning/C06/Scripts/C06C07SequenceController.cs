@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 namespace FilmInspiredGames.Burning.C06
 {
@@ -25,6 +26,10 @@ namespace FilmInspiredGames.Burning.C06
         [SerializeField, Min(0.01f)] private float puzzleReturnDuration = 0.32f;
         [SerializeField, Min(0f)] private float puzzleReturnMargin = 8f;
 
+        [Header("C06 말풍선 퍼즐")]
+        [SerializeField, Min(1f)] private float speechPuzzleSnapDistance = 42f;
+        [SerializeField, Min(0.01f)] private float speechPuzzleFadeDuration = 0.38f;
+
         [Header("C07")]
         [SerializeField] private CanvasGroup c07Root;
         [SerializeField] private CanvasGroup c07Unknown;
@@ -33,7 +38,10 @@ namespace FilmInspiredGames.Burning.C06
         [SerializeField] private RectTransform c07ExclamationRect;
         [SerializeField, Min(0f)] private float c07UnknownHold = 1.4f;
         [SerializeField, Min(0.01f)] private float c07RealizeDuration = 0.75f;
-        [SerializeField, Min(0f)] private float c07EndingHold = 1.1f;
+        [SerializeField, Min(0.1f)] private float c07PromptPulseDuration = 1.15f;
+        [SerializeField, Range(0f, 0.15f)] private float c07PromptScaleAmount = 0.06f;
+        [SerializeField, Range(0f, 0.5f)] private float c07PromptRedAmount = 0.18f;
+        [SerializeField, Min(0f)] private float c07ExclamationHitPadding = 18f;
 
         [Header("장면 전환")]
         [SerializeField] private CanvasGroup blackOverlay;
@@ -51,6 +59,17 @@ namespace FilmInspiredGames.Burning.C06
         private int placedPuzzleCount;
         private Vector2 puzzleDragOffset;
         private Coroutine sequenceRoutine;
+        private bool startAtC07;
+        private Image c07ExclamationImage;
+        private Color c07ExclamationBaseColor = Color.white;
+        private CanvasGroup speechPuzzleRoot;
+        private RectTransform speechPuzzleRootRect;
+        private RectTransform[] speechPuzzlePieces;
+        private Vector2[] speechPuzzleHomePositions;
+        private bool[] speechPuzzlePlaced;
+        private int draggedSpeechPuzzleIndex = -1;
+        private int placedSpeechPuzzleCount;
+        private Vector2 speechPuzzleDragOffset;
 
         private static readonly Vector2[] ScatterCentersSource =
         {
@@ -67,8 +86,27 @@ namespace FilmInspiredGames.Burning.C06
             8f, -8f, -5f, -6f, -7f, -8f, 9f, -15f, 1f, -23f
         };
 
+        private static readonly Rect[] SpeechPuzzleCrops =
+        {
+            new(1f, 1f, 439f, 203f),
+            new(378f, 2f, 381f, 160f),
+            new(3f, 158f, 379f, 110f),
+            new(321f, 116f, 436f, 201f)
+        };
+
+        private static readonly Vector2[] SpeechPuzzleScatterPositions =
+        {
+            new(125f, -690f),
+            new(415f, -700f),
+            new(120f, -910f),
+            new(410f, -900f)
+        };
+
+        private static readonly float[] SpeechPuzzleScatterRotations = { -8f, 7f, 6f, -5f };
+
         public string CurrentChapter { get; private set; } = "재생 대기";
         public string CurrentState { get; private set; } = "대기";
+        public bool IsSpeechPuzzlePlayable { get; private set; }
         public bool IsWaitingForPuzzleBreak { get; private set; }
         public bool IsPuzzlePlayable { get; private set; }
         public int PlacedPuzzleCount => placedPuzzleCount;
@@ -76,6 +114,17 @@ namespace FilmInspiredGames.Burning.C06
 
         private void Awake()
         {
+            CreateSpeechPuzzle();
+
+            if (c07ExclamationRect != null)
+            {
+                c07ExclamationImage = c07ExclamationRect.GetComponent<Image>();
+                if (c07ExclamationImage != null)
+                {
+                    c07ExclamationBaseColor = c07ExclamationImage.color;
+                }
+            }
+
             puzzleHomePositions = new Vector2[puzzlePieces.Length];
             puzzlePlaced = new bool[puzzlePieces.Length];
             puzzleReturning = new bool[puzzlePieces.Length];
@@ -87,6 +136,7 @@ namespace FilmInspiredGames.Burning.C06
 
         private void Start()
         {
+            startAtC07 = BurningChapterDebugRequest.Consume() == "C07";
             Prepare();
             if (playOnStart)
             {
@@ -98,6 +148,12 @@ namespace FilmInspiredGames.Burning.C06
         {
             ReadPointer(out Vector2 pointerPosition, out bool pressed, out bool held, out bool released);
 
+            if (IsSpeechPuzzlePlayable)
+            {
+                HandleSpeechPuzzleInput(pointerPosition, pressed, held, released);
+                return;
+            }
+
             if (IsPuzzlePlayable)
             {
                 HandlePuzzleInput(pointerPosition, pressed, held, released);
@@ -108,7 +164,7 @@ namespace FilmInspiredGames.Burning.C06
             {
                 puzzleBreakRequested = true;
             }
-            else if (pressed && IsWaitingForNextScene)
+            else if (pressed && IsWaitingForNextScene && IsExclamationPressed(pointerPosition))
             {
                 nextSceneRequested = true;
             }
@@ -131,6 +187,7 @@ namespace FilmInspiredGames.Burning.C06
             SetAlpha(c06Idle, 1f);
             SetAlpha(c06Speaking, 0f);
             SetAlpha(c06SpeechBubble, 0f);
+            SetAlpha(speechPuzzleRoot, 0f);
             SetAlpha(c06PuzzleBase, 0f);
             SetAlpha(c06PuzzleRoot, 0f);
             SetAlpha(c07Root, 0f);
@@ -153,11 +210,18 @@ namespace FilmInspiredGames.Burning.C06
                 c07ExclamationRect.localScale = Vector3.zero;
             }
 
+            if (c07ExclamationImage != null)
+            {
+                c07ExclamationImage.color = c07ExclamationBaseColor;
+            }
+
             puzzleBreakRequested = false;
             nextSceneRequested = false;
+            ResetSpeechPuzzle();
             draggedPuzzleIndex = -1;
             placedPuzzleCount = 0;
             IsWaitingForPuzzleBreak = false;
+            IsSpeechPuzzlePlayable = false;
             IsPuzzlePlayable = false;
             IsWaitingForNextScene = false;
             CurrentChapter = "C06";
@@ -166,60 +230,95 @@ namespace FilmInspiredGames.Burning.C06
 
         private IEnumerator PlayRoutine()
         {
-            yield return Wait(openingHold);
-
-            CurrentState = "나 몰라?";
-            yield return CrossFade(c06Idle, c06Speaking, speechFadeDuration);
-            yield return Fade(c06SpeechBubble, 0f, 1f, speechFadeDuration * 0.8f);
-
-            IsWaitingForPuzzleBreak = true;
-            while (!puzzleBreakRequested)
+            if (!startAtC07)
             {
-                yield return null;
+                yield return Wait(openingHold);
+
+                SetAlpha(speechPuzzleRoot, 1f);
+                IsSpeechPuzzlePlayable = true;
+                CurrentState = $"말풍선 퍼즐 맞추기 {placedSpeechPuzzleCount}/{speechPuzzlePieces.Length}";
+                while (placedSpeechPuzzleCount < speechPuzzlePieces.Length)
+                {
+                    yield return null;
+                }
+                IsSpeechPuzzlePlayable = false;
+                CurrentState = "말풍선 퍼즐 완성";
+                yield return Wait(0.25f);
+                yield return Fade(
+                    speechPuzzleRoot, speechPuzzleRoot.alpha, 0f, speechPuzzleFadeDuration);
+
+                CurrentState = "나 몰라?";
+                yield return CrossFade(c06Idle, c06Speaking, speechFadeDuration);
+                yield return Fade(c06SpeechBubble, 0f, 1f, speechFadeDuration * 0.8f);
+
+                IsWaitingForPuzzleBreak = true;
+                while (!puzzleBreakRequested)
+                {
+                    yield return null;
+                }
+                IsWaitingForPuzzleBreak = false;
+
+                CurrentState = "기억의 퍼즐";
+                SetAlpha(c06SpeechBubble, 0f);
+                SetAlpha(c06Speaking, 0f);
+                SetAlpha(c06PuzzleBase, 1f);
+                SetAlpha(c06PuzzleRoot, 1f);
+                yield return Wait(assembledHold);
+
+                CurrentState = "퍼즐 조각이 흩어짐";
+                yield return BurstPuzzle();
+                yield return Wait(Mathf.Min(scatteredHold, 0.25f));
+
+                IsPuzzlePlayable = true;
+                CurrentState = $"퍼즐 맞추기 {placedPuzzleCount}/{puzzlePieces.Length}";
+                while (placedPuzzleCount < puzzlePieces.Length)
+                {
+                    yield return null;
+                }
+                IsPuzzlePlayable = false;
+                CurrentState = "퍼즐 완성";
+                yield return Wait(puzzleSolvedHold);
+                CurrentState = "C07 이동 대기";
+                yield return BurningContinuePrompt.WaitForContinue();
+
+                BurningChapterSettings.ResolvedTiming c06ToC07 = BurningChapterSettings.Resolve(
+                    "C06", "C07", chapterFadeDuration, 0f, chapterFadeDuration);
+                yield return Fade(blackOverlay, 0f, 1f, c06ToC07.FadeOutDuration);
+                yield return Wait(c06ToC07.BlackHoldDuration);
+                SetAlpha(c06Root, 0f);
+                SetAlpha(c07Root, 1f);
+                CurrentChapter = "C07";
+                CurrentState = "알 수 없는 표정";
+                yield return Fade(blackOverlay, 1f, 0f, c06ToC07.FadeInDuration);
             }
-            IsWaitingForPuzzleBreak = false;
-
-            CurrentState = "기억의 퍼즐";
-            SetAlpha(c06SpeechBubble, 0f);
-            SetAlpha(c06Speaking, 0f);
-            SetAlpha(c06PuzzleBase, 1f);
-            SetAlpha(c06PuzzleRoot, 1f);
-            yield return Wait(assembledHold);
-
-            CurrentState = "퍼즐 조각이 흩어짐";
-            yield return BurstPuzzle();
-            yield return Wait(Mathf.Min(scatteredHold, 0.25f));
-
-            IsPuzzlePlayable = true;
-            CurrentState = $"퍼즐 맞추기 {placedPuzzleCount}/{puzzlePieces.Length}";
-            while (placedPuzzleCount < puzzlePieces.Length)
+            else
             {
-                yield return null;
+                SetAlpha(c06Root, 0f);
+                SetAlpha(c07Root, 1f);
+                SetAlpha(blackOverlay, 0f);
+                CurrentChapter = "C07";
+                CurrentState = "알 수 없는 표정";
             }
-            IsPuzzlePlayable = false;
-            CurrentState = "퍼즐 완성";
-            yield return Wait(puzzleSolvedHold);
 
-            yield return Fade(blackOverlay, 0f, 1f, chapterFadeDuration);
-            SetAlpha(c06Root, 0f);
-            SetAlpha(c07Root, 1f);
-            CurrentChapter = "C07";
-            CurrentState = "알 수 없는 표정";
-            yield return Fade(blackOverlay, 1f, 0f, chapterFadeDuration);
             yield return Wait(c07UnknownHold);
 
             CurrentState = "깨달음";
             yield return CrossFade(c07Unknown, c07Realizes, c07RealizeDuration);
             yield return PopExclamation();
-            yield return Wait(c07EndingHold);
 
             IsWaitingForNextScene = true;
-            CurrentState = "다음 장면 대기";
+            CurrentState = "느낌표 선택 대기";
+            float promptElapsed = 0f;
             while (!nextSceneRequested)
             {
+                promptElapsed += Time.unscaledDeltaTime;
+                AnimateExclamationPrompt(promptElapsed);
                 yield return null;
             }
             IsWaitingForNextScene = false;
+            ResetExclamationPrompt();
+            CurrentState = "C08 이동 대기";
+            yield return BurningContinuePrompt.WaitForContinue();
 
             if (!Application.CanStreamedLevelBeLoaded(nextSceneName))
             {
@@ -228,8 +327,11 @@ namespace FilmInspiredGames.Burning.C06
                 yield break;
             }
 
+            BurningChapterSettings.ResolvedTiming c07ToC08 = BurningChapterSettings.Resolve(
+                "C07", "C08", nextSceneFadeDuration, 0f, 0f);
             CurrentState = "C08로 전환";
-            yield return Fade(blackOverlay, 0f, 1f, nextSceneFadeDuration);
+            yield return Fade(blackOverlay, 0f, 1f, c07ToC08.FadeOutDuration);
+            yield return Wait(c07ToC08.BlackHoldDuration);
             SceneManager.LoadScene(nextSceneName);
         }
 
@@ -266,6 +368,222 @@ namespace FilmInspiredGames.Burning.C06
                 puzzlePieces[i].localRotation = Quaternion.Euler(0f, 0f, ScatterRotation(i));
                 puzzlePieces[i].localScale = Vector3.one;
             }
+        }
+
+        private void CreateSpeechPuzzle()
+        {
+            if (c06Root == null || speechPuzzleRoot != null)
+            {
+                return;
+            }
+
+            GameObject rootObject = new(
+                "SpeechPuzzle", typeof(RectTransform), typeof(CanvasGroup));
+            speechPuzzleRootRect = rootObject.GetComponent<RectTransform>();
+            speechPuzzleRootRect.SetParent(c06Root.transform, false);
+            Stretch(speechPuzzleRootRect);
+            speechPuzzleRoot = rootObject.GetComponent<CanvasGroup>();
+
+            const float sourceWidth = 760f;
+            const float sourceHeight = 320f;
+            const float targetX = 70f;
+            const float targetY = 720f;
+            const float targetWidth = 400f;
+            float targetHeight = targetWidth * sourceHeight / sourceWidth;
+            float scaleX = targetWidth / sourceWidth;
+            float scaleY = targetHeight / sourceHeight;
+
+            CreateSpeechPuzzleImage(
+                "Guide",
+                Resources.Load<Texture2D>("C06/SpeechPuzzle/C06_SpeechPuzzle_Full"),
+                new Rect(0f, 0f, sourceWidth, sourceHeight),
+                targetX,
+                targetY,
+                scaleX,
+                scaleY,
+                1f);
+
+            speechPuzzlePieces = new RectTransform[SpeechPuzzleCrops.Length];
+            speechPuzzleHomePositions = new Vector2[SpeechPuzzleCrops.Length];
+            speechPuzzlePlaced = new bool[SpeechPuzzleCrops.Length];
+
+            for (int i = 0; i < SpeechPuzzleCrops.Length; i++)
+            {
+                RectTransform piece = CreateSpeechPuzzleImage(
+                    $"Piece_{i + 1:00}",
+                    Resources.Load<Texture2D>($"C06/SpeechPuzzle/C06_SpeechPuzzle_{i + 1:00}"),
+                    SpeechPuzzleCrops[i],
+                    targetX,
+                    targetY,
+                    scaleX,
+                    scaleY,
+                    0.62f);
+                speechPuzzlePieces[i] = piece;
+                speechPuzzleHomePositions[i] = piece.anchoredPosition;
+            }
+
+            CreateSpeechPuzzleImage(
+                "Border",
+                Resources.Load<Texture2D>("C06/SpeechPuzzle/C06_SpeechPuzzle_Border"),
+                new Rect(0f, 0f, sourceWidth, sourceHeight),
+                targetX,
+                targetY,
+                scaleX,
+                scaleY,
+                1f);
+        }
+
+        private RectTransform CreateSpeechPuzzleImage(
+            string objectName,
+            Texture texture,
+            Rect sourceRect,
+            float targetX,
+            float targetY,
+            float scaleX,
+            float scaleY,
+            float alpha)
+        {
+            GameObject imageObject = new(
+                objectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage));
+            RectTransform rect = imageObject.GetComponent<RectTransform>();
+            rect.SetParent(speechPuzzleRootRect, false);
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(0f, 1f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.sizeDelta = new Vector2(sourceRect.width * scaleX, sourceRect.height * scaleY);
+            rect.anchoredPosition = new Vector2(
+                targetX + (sourceRect.x + sourceRect.width * 0.5f) * scaleX,
+                -(targetY + (sourceRect.y + sourceRect.height * 0.5f) * scaleY));
+
+            RawImage image = imageObject.GetComponent<RawImage>();
+            image.texture = texture;
+            image.color = new Color(1f, 1f, 1f, alpha);
+            image.raycastTarget = false;
+            return rect;
+        }
+
+        private void ResetSpeechPuzzle()
+        {
+            if (speechPuzzlePieces == null)
+            {
+                return;
+            }
+
+            placedSpeechPuzzleCount = 0;
+            draggedSpeechPuzzleIndex = -1;
+            for (int i = 0; i < speechPuzzlePieces.Length; i++)
+            {
+                speechPuzzlePlaced[i] = false;
+                speechPuzzlePieces[i].anchoredPosition = SpeechPuzzleScatterPositions[i];
+                speechPuzzlePieces[i].localRotation = Quaternion.Euler(
+                    0f, 0f, SpeechPuzzleScatterRotations[i]);
+                speechPuzzlePieces[i].localScale = Vector3.one;
+            }
+        }
+
+        private void HandleSpeechPuzzleInput(
+            Vector2 screenPosition,
+            bool pressed,
+            bool held,
+            bool released)
+        {
+            if (pressed)
+            {
+                BeginSpeechPuzzleDrag(screenPosition);
+            }
+
+            if (draggedSpeechPuzzleIndex >= 0 && held)
+            {
+                RectTransform piece = speechPuzzlePieces[draggedSpeechPuzzleIndex];
+                piece.anchoredPosition =
+                    ScreenToSpeechPuzzlePosition(screenPosition) + speechPuzzleDragOffset;
+                piece.localRotation = Quaternion.Slerp(
+                    piece.localRotation, Quaternion.identity, 0.25f);
+            }
+
+            if (draggedSpeechPuzzleIndex >= 0 && (released || !held))
+            {
+                EndSpeechPuzzleDrag();
+            }
+        }
+
+        private void BeginSpeechPuzzleDrag(Vector2 screenPosition)
+        {
+            int selectedIndex = -1;
+            int highestSibling = -1;
+            for (int i = 0; i < speechPuzzlePieces.Length; i++)
+            {
+                if (speechPuzzlePlaced[i]
+                    || !RectTransformUtility.RectangleContainsScreenPoint(
+                        speechPuzzlePieces[i], screenPosition))
+                {
+                    continue;
+                }
+
+                int sibling = speechPuzzlePieces[i].GetSiblingIndex();
+                if (sibling > highestSibling)
+                {
+                    highestSibling = sibling;
+                    selectedIndex = i;
+                }
+            }
+
+            if (selectedIndex < 0)
+            {
+                return;
+            }
+
+            draggedSpeechPuzzleIndex = selectedIndex;
+            RectTransform selected = speechPuzzlePieces[selectedIndex];
+            speechPuzzleDragOffset =
+                selected.anchoredPosition - ScreenToSpeechPuzzlePosition(screenPosition);
+            selected.SetAsLastSibling();
+            selected.localScale = Vector3.one * 1.05f;
+        }
+
+        private void EndSpeechPuzzleDrag()
+        {
+            int index = draggedSpeechPuzzleIndex;
+            draggedSpeechPuzzleIndex = -1;
+            RectTransform piece = speechPuzzlePieces[index];
+            piece.localScale = Vector3.one;
+
+            if (IsMoreThanHalfOutside(piece))
+            {
+                piece.anchoredPosition = GetFullyVisiblePosition(piece);
+                return;
+            }
+
+            if (Vector2.Distance(
+                    piece.anchoredPosition, speechPuzzleHomePositions[index])
+                > speechPuzzleSnapDistance)
+            {
+                return;
+            }
+
+            piece.anchoredPosition = speechPuzzleHomePositions[index];
+            piece.localRotation = Quaternion.identity;
+            speechPuzzlePlaced[index] = true;
+            placedSpeechPuzzleCount++;
+            CurrentState =
+                $"말풍선 퍼즐 맞추기 {placedSpeechPuzzleCount}/{speechPuzzlePieces.Length}";
+        }
+
+        private Vector2 ScreenToSpeechPuzzlePosition(Vector2 screenPosition)
+        {
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                speechPuzzleRootRect, screenPosition, null, out Vector2 localPosition);
+            Vector2 topLeft =
+                new(speechPuzzleRootRect.rect.xMin, speechPuzzleRootRect.rect.yMax);
+            return localPosition - topLeft;
+        }
+
+        private static void Stretch(RectTransform rect)
+        {
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
         }
 
         private void HandlePuzzleInput(Vector2 screenPosition, bool pressed, bool held, bool released)
@@ -467,6 +785,53 @@ namespace FilmInspiredGames.Burning.C06
             }
 
             c07ExclamationRect.localScale = Vector3.one;
+        }
+
+        private bool IsExclamationPressed(Vector2 screenPosition)
+        {
+            if (c07ExclamationRect == null
+                || !RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                    c07ExclamationRect, screenPosition, null, out Vector2 localPosition))
+            {
+                return false;
+            }
+
+            Rect hitRect = c07ExclamationRect.rect;
+            hitRect.xMin -= c07ExclamationHitPadding;
+            hitRect.xMax += c07ExclamationHitPadding;
+            hitRect.yMin -= c07ExclamationHitPadding;
+            hitRect.yMax += c07ExclamationHitPadding;
+            return hitRect.Contains(localPosition);
+        }
+
+        private void AnimateExclamationPrompt(float elapsed)
+        {
+            float phase = elapsed / Mathf.Max(0.1f, c07PromptPulseDuration) * Mathf.PI * 2f;
+            float pulse = (1f - Mathf.Cos(phase)) * 0.5f;
+            c07ExclamationRect.localScale = Vector3.one * (1f + pulse * c07PromptScaleAmount);
+
+            if (c07ExclamationImage != null)
+            {
+                Color redTint = new(
+                    c07ExclamationBaseColor.r,
+                    c07ExclamationBaseColor.g * (1f - c07PromptRedAmount),
+                    c07ExclamationBaseColor.b * (1f - c07PromptRedAmount),
+                    c07ExclamationBaseColor.a);
+                c07ExclamationImage.color = Color.Lerp(c07ExclamationBaseColor, redTint, pulse);
+            }
+        }
+
+        private void ResetExclamationPrompt()
+        {
+            if (c07ExclamationRect != null)
+            {
+                c07ExclamationRect.localScale = Vector3.one;
+            }
+
+            if (c07ExclamationImage != null)
+            {
+                c07ExclamationImage.color = c07ExclamationBaseColor;
+            }
         }
 
         private static IEnumerator CrossFade(CanvasGroup from, CanvasGroup to, float duration)

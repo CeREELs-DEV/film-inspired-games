@@ -11,7 +11,7 @@ namespace FilmInspiredGames.Burning
         {
             if (!eventData.dragging)
             {
-                flow?.Advance();
+                flow?.HandleScreenClick();
             }
         }
     }

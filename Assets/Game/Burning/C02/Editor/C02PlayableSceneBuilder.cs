@@ -342,6 +342,7 @@ namespace FilmInspiredGames.Burning.C02.Editor
             serialized.FindProperty("cutDuration").floatValue = 0.76f;
             serialized.FindProperty("warehouseDarkness").floatValue = 0.38f;
             serialized.FindProperty("playOnStart").boolValue = true;
+            serialized.FindProperty("standaloneNextSceneName").stringValue = "Burning_C04_Playable";
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 

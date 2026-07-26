@@ -58,6 +58,7 @@ namespace FilmInspiredGames.Burning.C04.Editor
             ConfigureController(controller, handle, capsuleUp, capsuleDown, watch, capsuleUpGroup, capsuleDownGroup, watchGroup);
 
             EditorSceneManager.SaveScene(scene, ScenePath);
+            AddSceneToBuildSettings();
             Selection.activeGameObject = controllerObject;
             Debug.Log("C04 플레이 씬 생성 완료. Play 버튼을 누르면 보상 연출이 시작됩니다.");
         }
@@ -104,8 +105,18 @@ namespace FilmInspiredGames.Burning.C04.Editor
             serialized.FindProperty("capsuleDownRect").objectReferenceValue = capsuleDown.rectTransform;
             serialized.FindProperty("watch").objectReferenceValue = watchGroup;
             serialized.FindProperty("watchRect").objectReferenceValue = watch.rectTransform;
+            serialized.FindProperty("standaloneNextSceneName").stringValue = "Burning_C06_C07_Playable";
             ConfigureTiming(serialized);
             serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void AddSceneToBuildSettings()
+        {
+            var scenes = EditorBuildSettings.scenes
+                .Where(scene => scene.path != ScenePath)
+                .ToList();
+            scenes.Add(new EditorBuildSettingsScene(ScenePath, true));
+            EditorBuildSettings.scenes = scenes.ToArray();
         }
 
         private static void ConfigureTiming(SerializedObject serialized)
@@ -113,9 +124,18 @@ namespace FilmInspiredGames.Burning.C04.Editor
             serialized.FindProperty("capsuleAppearDuration").floatValue = 0.68f;
             serialized.FindProperty("capsuleScalePop").floatValue = 0.075f;
             serialized.FindProperty("capsuleSettleDip").floatValue = 0.018f;
+            serialized.FindProperty("capsuleDropDistance").floatValue = 68f;
+            serialized.FindProperty("capsuleLandingSquash").floatValue = 0.09f;
+            serialized.FindProperty("openAnticipationDuration").floatValue = 0.13f;
+            serialized.FindProperty("openAnticipationSquash").floatValue = 0.1f;
             serialized.FindProperty("capsuleOpenDuration").floatValue = 0.46f;
             serialized.FindProperty("watchAppearDelay").floatValue = 0.08f;
             serialized.FindProperty("watchFadeDuration").floatValue = 0.42f;
+            serialized.FindProperty("watchStartScale").floatValue = 0.56f;
+            serialized.FindProperty("watchRiseDistance").floatValue = 42f;
+            serialized.FindProperty("watchScalePop").floatValue = 0.13f;
+            serialized.FindProperty("watchStartRotation").floatValue = -7f;
+            serialized.FindProperty("watchSettleDuration").floatValue = 0.32f;
         }
 
         private static void CreateCameraAndLight()

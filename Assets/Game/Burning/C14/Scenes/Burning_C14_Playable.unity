@@ -1482,6 +1482,11 @@ MonoBehaviour:
   glass1Liquid: {fileID: 941711724}
   glass2Liquid: {fileID: 1772624690}
   fillDuration: 2.4
+  holdHintSprite: {fileID: 21300000, guid: 8e921c5f42f84ba0abbe819197328de4, type: 3}
+  holdHintSize: {x: 34, y: 90}
+  holdHintGap: 58
+  holdHintCycleDuration: 2.35
+  holdHintPressDistance: 10
   part2SojuSet: {fileID: 2027681456}
   part2Images:
   - {fileID: 1840082189}

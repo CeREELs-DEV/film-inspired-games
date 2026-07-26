@@ -107,7 +107,30 @@ namespace FilmInspiredGames.Burning
 
         private void Start()
         {
+            string requestedChapter = BurningChapterDebugRequest.Consume();
             ShowC01();
+            if (requestedChapter is "C02" or "C03" or "C04")
+            {
+                StartCoroutine(StartDebugChapter(requestedChapter));
+            }
+        }
+
+        private IEnumerator StartDebugChapter(string chapter)
+        {
+            yield return null;
+
+            switch (chapter)
+            {
+                case "C02":
+                    ShowC02();
+                    break;
+                case "C03":
+                    ShowC03();
+                    break;
+                case "C04":
+                    ShowC04();
+                    break;
+            }
         }
 
         private void OnDisable()
@@ -125,6 +148,7 @@ namespace FilmInspiredGames.Burning
 
         public void Advance()
         {
+            BurningContinuePrompt.Hide();
             switch (currentStep)
             {
                 case Step.C01:
@@ -142,6 +166,14 @@ namespace FilmInspiredGames.Burning
                 case Step.C04Complete:
                     transitionRoutine = StartCoroutine(TransitionToC06());
                     break;
+            }
+        }
+
+        public void HandleScreenClick()
+        {
+            if (currentStep == Step.C03First)
+            {
+                Advance();
             }
         }
 
@@ -168,20 +200,24 @@ namespace FilmInspiredGames.Burning
             c04Sequence?.StopSequence();
             SetFade(0f);
             onC01Started?.Invoke();
+            BurningContinuePrompt.Show(Advance);
         }
 
         private IEnumerator TransitionToC02()
         {
+            BurningChapterSettings.ResolvedTiming timing = BurningChapterSettings.Resolve(
+                "C01", "C02", fadeOutDuration, fadeHoldDuration, fadeInDuration);
             currentStep = Step.C01ToC02;
-            yield return FadeTo(1f, fadeOutDuration);
-            yield return new WaitForSecondsRealtime(fadeHoldDuration);
+            yield return FadeTo(1f, timing.FadeOutDuration);
+            yield return Wait(timing.BlackHoldDuration);
             ShowC02();
-            yield return FadeTo(0f, fadeInDuration);
+            yield return FadeTo(0f, timing.FadeInDuration);
             transitionRoutine = null;
         }
 
         private void ShowC02()
         {
+            BurningContinuePrompt.Hide();
             currentStep = Step.C02Playing;
             SetGroup(c01Group, false);
             SetGroup(c02Group, true);
@@ -191,26 +227,59 @@ namespace FilmInspiredGames.Burning
             c02Sequence?.Play();
         }
 
+        private void ShowC03()
+        {
+            currentStep = Step.C03First;
+            SetGroup(c01Group, false);
+            SetGroup(c02Group, false);
+            SetGroup(c03Group, true);
+            SetGroup(c04Group, false);
+            SetC03Frame(true, false);
+            c02Sequence?.StopSequence();
+            c04Sequence?.StopSequence();
+            SetFade(0f);
+            onC03Started?.Invoke();
+            BurningContinuePrompt.Hide();
+        }
+
+        private void ShowC04()
+        {
+            BurningContinuePrompt.Hide();
+            currentStep = Step.C04Playing;
+            SetGroup(c01Group, false);
+            SetGroup(c02Group, false);
+            SetGroup(c03Group, false);
+            SetGroup(c04Group, true);
+            SetC03Frame(false, false);
+            c02Sequence?.StopSequence();
+            SetFade(0f);
+            onC04Started?.Invoke();
+            c04Sequence?.Play();
+        }
+
         private void HandleC02Finished()
         {
             if (currentStep == Step.C02Playing)
             {
                 currentStep = Step.C02Complete;
+                BurningContinuePrompt.Show(Advance);
             }
         }
 
         private IEnumerator TransitionToC03First()
         {
+            BurningChapterSettings.ResolvedTiming timing = BurningChapterSettings.Resolve(
+                "C02", "C03", fadeOutDuration, fadeHoldDuration, fadeInDuration);
             currentStep = Step.C02ToC03;
-            yield return FadeTo(1f, fadeOutDuration);
-            yield return new WaitForSecondsRealtime(fadeHoldDuration);
+            yield return FadeTo(1f, timing.FadeOutDuration);
+            yield return Wait(timing.BlackHoldDuration);
             SetGroup(c01Group, false);
             SetGroup(c02Group, false);
             SetGroup(c03Group, true);
             SetGroup(c04Group, false);
             SetC03Frame(true, false);
             onC03Started?.Invoke();
-            yield return FadeTo(0f, fadeInDuration);
+            yield return FadeTo(0f, timing.FadeInDuration);
             currentStep = Step.C03First;
             transitionRoutine = null;
         }
@@ -224,6 +293,7 @@ namespace FilmInspiredGames.Burning
             yield return FadeTo(0f, fadeInDuration);
             currentStep = Step.C03Second;
             transitionRoutine = null;
+            BurningContinuePrompt.Show(Advance);
         }
 
         private IEnumerator TransitionToC04()
@@ -235,15 +305,17 @@ namespace FilmInspiredGames.Burning
                 yield break;
             }
 
+            BurningChapterSettings.ResolvedTiming timing = BurningChapterSettings.Resolve(
+                "C03", "C04", fadeOutDuration, fadeHoldDuration, fadeInDuration);
             currentStep = Step.C03ToC04;
-            yield return FadeTo(1f, fadeOutDuration);
-            yield return new WaitForSecondsRealtime(fadeHoldDuration);
+            yield return FadeTo(1f, timing.FadeOutDuration);
+            yield return Wait(timing.BlackHoldDuration);
             SetGroup(c01Group, false);
             SetGroup(c02Group, false);
             SetGroup(c03Group, false);
             SetGroup(c04Group, true);
             onC04Started?.Invoke();
-            yield return FadeTo(0f, fadeInDuration);
+            yield return FadeTo(0f, timing.FadeInDuration);
             currentStep = Step.C04Playing;
             c04Sequence.Play();
             transitionRoutine = null;
@@ -254,6 +326,7 @@ namespace FilmInspiredGames.Burning
             if (currentStep == Step.C04Playing)
             {
                 currentStep = Step.C04Complete;
+                BurningContinuePrompt.Show(Advance);
             }
         }
 
@@ -266,9 +339,11 @@ namespace FilmInspiredGames.Burning
                 yield break;
             }
 
+            BurningChapterSettings.ResolvedTiming timing = BurningChapterSettings.Resolve(
+                "C04", "C06", nextSceneFadeDuration, nextSceneFadeHold, 0f);
             currentStep = Step.C04ToC06;
-            yield return FadeTo(1f, nextSceneFadeDuration);
-            yield return new WaitForSecondsRealtime(nextSceneFadeHold);
+            yield return FadeTo(1f, timing.FadeOutDuration);
+            yield return Wait(timing.BlackHoldDuration);
             CompleteAct();
             SceneManager.LoadScene(nextSceneName);
         }
@@ -331,6 +406,14 @@ namespace FilmInspiredGames.Burning
             if (transitionFade != null)
             {
                 transitionFade.alpha = alpha;
+            }
+        }
+
+        private static IEnumerator Wait(float duration)
+        {
+            if (duration > 0f)
+            {
+                yield return new WaitForSecondsRealtime(duration);
             }
         }
     }
