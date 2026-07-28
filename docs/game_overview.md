@@ -37,6 +37,7 @@
 - 타이틀 UI: `Assets/Game/Burning/Common/Scripts/BurningTitleScreen.cs`
 - 진행 저장: `Assets/Game/Burning/Common/Scripts/BurningProgress.cs`
 - 타이틀 글꼴: `Assets/Game/Burning/Resources/Fonts/`
+- 타이틀·챕터 UI 이미지: `Assets/Game/Burning/Resources/UI/`
 - C02 완료 전 C03 이동 차단
 - C01·C02·C03 전환 시점별 연출 신호 제공
 

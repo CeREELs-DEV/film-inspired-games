@@ -13,18 +13,19 @@ namespace FilmInspiredGames.Burning
         private static readonly Color BackgroundColor = new(0.69f, 0.61f, 0.51f, 1f);
         private static readonly Color CharcoalColor = new(0.12f, 0.115f, 0.105f, 1f);
         private static readonly Color CreamColor = new(0.94f, 0.91f, 0.84f, 1f);
-        private static readonly Color DisabledColor = new(0.25f, 0.23f, 0.2f, 0.45f);
 
         private BurningAct1FlowController flowController;
         private GameObject titlePage;
         private GameObject chapterPage;
         private GameObject introPage;
         private Button chapterCardButton;
-        private TMP_Text progressText;
+        private RectTransform chapterCardGraphic;
+        private EventTrigger chapterCardHoverTrigger;
+        private RawImage introImage;
         private CanvasGroup rootGroup;
-        private CanvasGroup introTextGroup;
         private TMP_FontAsset regularFont;
         private TMP_FontAsset boldFont;
+        private TMP_FontAsset titleFont;
         private Coroutine introRoutine;
 
         public static void Show(BurningAct1FlowController flow)
@@ -79,15 +80,30 @@ namespace FilmInspiredGames.Burning
 
         private void BuildTitlePage(Transform parent)
         {
+            Texture2D titleBackground =
+                Resources.Load<Texture2D>("UI/Burning_Title_Background");
+            if (titleBackground != null)
+            {
+                RawImage background = CreateRawImage(
+                    "TitleBackground", parent, titleBackground);
+                Stretch(background.rectTransform);
+            }
+            else
+            {
+                Debug.LogError("타이틀 배경 이미지를 찾을 수 없음.");
+            }
+
             TMP_Text title = CreateText(
                 "Title",
                 parent,
                 "Burn my nest",
-                boldFont,
+                titleFont,
                 68f,
-                CharcoalColor,
+                CreamColor,
                 TextAlignmentOptions.Left);
             SetRect(title.rectTransform, new Vector2(0.11f, 0.68f), new Vector2(0.9f, 0.88f));
+            title.fontStyle = FontStyles.Bold;
+            ApplyReadableLightStyle(title);
 
             RectTransform menu = CreateRect("Menu", parent);
             SetRect(menu, new Vector2(0.11f, 0.28f), new Vector2(0.65f, 0.6f));
@@ -99,89 +115,75 @@ namespace FilmInspiredGames.Burning
 
         private void BuildChapterPage(Transform parent)
         {
-            TMP_Text heading = CreateText(
-                "Heading",
-                parent,
-                "챕터",
-                boldFont,
-                50f,
-                CharcoalColor,
-                TextAlignmentOptions.Left);
-            SetRect(heading.rectTransform, new Vector2(0.1f, 0.82f), new Vector2(0.8f, 0.93f));
+            Texture2D chapterBackground =
+                Resources.Load<Texture2D>("UI/Burning_ChapterSelect_Background");
+            Texture2D chapterCard =
+                Resources.Load<Texture2D>("UI/Burning_Chapter01_Card");
+            if (chapterBackground == null || chapterCard == null)
+            {
+                Debug.LogError("Chapter 1 선택 화면 이미지를 찾을 수 없음.");
+                return;
+            }
+
+            RawImage background = CreateRawImage(
+                "ChapterBackground", parent, chapterBackground);
+            Stretch(background.rectTransform);
+
+            RawImage cardGraphic = CreateRawImage(
+                "Chapter01Card", parent, chapterCard);
+            chapterCardGraphic = cardGraphic.rectTransform;
+            Stretch(chapterCardGraphic);
+
+            Image cardHitArea = CreateImage("Chapter01HitArea", parent, Color.clear);
+            SetRect(
+                cardHitArea.rectTransform,
+                new Vector2(0.11f, 0.23f),
+                new Vector2(0.91f, 0.79f));
+
+            chapterCardButton = cardHitArea.gameObject.AddComponent<Button>();
+            chapterCardButton.targetGraphic = cardHitArea;
+            chapterCardButton.transition = Selectable.Transition.None;
+            chapterCardButton.onClick.AddListener(ContinueChapter);
+            chapterCardHoverTrigger = AddHoverScale(
+                cardHitArea.gameObject, chapterCardGraphic, 1.04f);
 
             Button backButton = CreateTextButton(
                 "Back",
                 parent,
                 "<",
                 44f,
-                new Vector2(0.79f, 0.84f),
-                new Vector2(0.91f, 0.92f),
+                new Vector2(0.08f, 0.84f),
+                new Vector2(0.2f, 0.92f),
                 CloseChapters);
             backButton.GetComponent<Image>().color = Color.clear;
-
-            Image card = CreateImage("Chapter01Card", parent, CreamColor);
-            SetRect(card.rectTransform, new Vector2(0.16f, 0.3f), new Vector2(0.84f, 0.76f));
-
-            Image placeholder = CreateImage("Placeholder", card.transform, CharcoalColor);
-            SetRect(placeholder.rectTransform, new Vector2(0.08f, 0.23f), new Vector2(0.92f, 0.91f));
-
-            TMP_Text mark = CreateText(
-                "Mark",
-                placeholder.transform,
-                "01",
-                boldFont,
-                92f,
-                new Color(0.72f, 0.65f, 0.56f, 0.32f),
-                TextAlignmentOptions.Center);
-            Stretch(mark.rectTransform);
-
-            TMP_Text chapterName = CreateText(
-                "ChapterName",
-                card.transform,
-                "Chapter.1",
-                boldFont,
-                35f,
-                CharcoalColor,
-                TextAlignmentOptions.Center);
-            SetRect(chapterName.rectTransform, new Vector2(0.05f, 0.1f), new Vector2(0.95f, 0.25f));
-
-            progressText = CreateText(
-                "Progress",
-                parent,
-                string.Empty,
-                regularFont,
-                28f,
-                CharcoalColor,
-                TextAlignmentOptions.Center);
-            SetRect(progressText.rectTransform, new Vector2(0.12f, 0.2f), new Vector2(0.88f, 0.28f));
-
-            chapterCardButton = card.gameObject.AddComponent<Button>();
-            chapterCardButton.targetGraphic = card;
-            chapterCardButton.onClick.AddListener(ContinueChapter);
-            chapterCardButton.transition = Selectable.Transition.ColorTint;
-            ColorBlock colors = chapterCardButton.colors;
-            colors.normalColor = Color.white;
-            colors.highlightedColor = new Color(1f, 0.97f, 0.9f, 1f);
-            colors.pressedColor = new Color(0.86f, 0.81f, 0.72f, 1f);
-            colors.disabledColor = DisabledColor;
-            chapterCardButton.colors = colors;
         }
 
         private void BuildIntroPage(Transform parent)
         {
-            Image background = CreateImage("IntroBackground", parent, CharcoalColor);
+            Image background = CreateImage("IntroBackground", parent, Color.black);
             Stretch(background.rectTransform);
 
-            TMP_Text chapter = CreateText(
-                "Chapter",
-                parent,
-                "Chapter.1",
-                boldFont,
-                58f,
-                CreamColor,
-                TextAlignmentOptions.Center);
-            SetRect(chapter.rectTransform, new Vector2(0.08f, 0.42f), new Vector2(0.92f, 0.58f));
-            introTextGroup = chapter.gameObject.AddComponent<CanvasGroup>();
+            Texture2D chapterTexture =
+                Resources.Load<Texture2D>("UI/Burning_Chapter01_Title");
+            if (chapterTexture == null)
+            {
+                Debug.LogError("Chapter 1 전환 이미지를 찾을 수 없음.");
+                return;
+            }
+
+            GameObject imageObject = new(
+                "Chapter01Image",
+                typeof(RectTransform),
+                typeof(CanvasRenderer),
+                typeof(RawImage));
+            RectTransform imageRect = imageObject.GetComponent<RectTransform>();
+            imageRect.SetParent(parent, false);
+            Stretch(imageRect);
+
+            introImage = imageObject.GetComponent<RawImage>();
+            introImage.texture = chapterTexture;
+            introImage.color = Color.white;
+            introImage.raycastTarget = false;
         }
 
         private void ShowInternal(BurningAct1FlowController flow)
@@ -208,7 +210,7 @@ namespace FilmInspiredGames.Burning
         private IEnumerator PlayChapterIntro()
         {
             SetPage(introPage);
-            introTextGroup.alpha = 1f;
+            introImage.color = Color.white;
             yield return new WaitForSecondsRealtime(1.25f);
 
             float elapsed = 0f;
@@ -216,7 +218,8 @@ namespace FilmInspiredGames.Burning
             while (elapsed < fadeDuration)
             {
                 elapsed += Time.unscaledDeltaTime;
-                introTextGroup.alpha = 1f - Mathf.Clamp01(elapsed / fadeDuration);
+                float alpha = 1f - Mathf.Clamp01(elapsed / fadeDuration);
+                introImage.color = new Color(1f, 1f, 1f, alpha);
                 yield return null;
             }
 
@@ -231,10 +234,8 @@ namespace FilmInspiredGames.Burning
         {
             bool hasSave = BurningProgress.HasSavedGame;
             chapterCardButton.interactable = hasSave;
-            progressText.text = hasSave
-                ? $"{BurningProgress.LatestChapter}에서 계속"
-                : "저장된 기록 없음";
-            progressText.color = hasSave ? CharcoalColor : DisabledColor;
+            chapterCardHoverTrigger.enabled = hasSave;
+            chapterCardGraphic.localScale = Vector3.one;
             SetPage(chapterPage);
         }
 
@@ -280,7 +281,8 @@ namespace FilmInspiredGames.Burning
                 new Vector2(1f, centerY + 0.14f),
                 action,
                 TextAlignmentOptions.Left,
-                1.08f);
+                1.08f,
+                true);
         }
 
         private Button CreateTextButton(
@@ -292,7 +294,8 @@ namespace FilmInspiredGames.Burning
             Vector2 anchorMax,
             UnityEngine.Events.UnityAction action,
             TextAlignmentOptions alignment = TextAlignmentOptions.Center,
-            float hoverFontScale = 1f)
+            float hoverFontScale = 1f,
+            bool lightText = false)
         {
             Image target = CreateImage(name, parent, Color.clear);
             SetRect(target.rectTransform, anchorMin, anchorMax);
@@ -313,11 +316,37 @@ namespace FilmInspiredGames.Burning
                 label,
                 regularFont,
                 fontSize,
-                CharcoalColor,
+                lightText ? CreamColor : CharcoalColor,
                 alignment);
             Stretch(text.rectTransform);
+            if (lightText)
+            {
+                ApplyReadableLightStyle(text);
+            }
+
             AddHoverFontSize(target.gameObject, text, hoverFontScale);
             return button;
+        }
+
+        private static EventTrigger AddHoverScale(
+            GameObject target,
+            RectTransform graphic,
+            float hoverScale)
+        {
+            EventTrigger trigger = target.AddComponent<EventTrigger>();
+            AddEventTrigger(
+                trigger,
+                EventTriggerType.PointerEnter,
+                _ => graphic.localScale = Vector3.one * hoverScale);
+            AddEventTrigger(
+                trigger,
+                EventTriggerType.PointerExit,
+                _ => graphic.localScale = Vector3.one);
+            AddEventTrigger(
+                trigger,
+                EventTriggerType.PointerClick,
+                _ => graphic.localScale = Vector3.one);
+            return trigger;
         }
 
         private static void AddHoverFontSize(
@@ -380,6 +409,32 @@ namespace FilmInspiredGames.Burning
             return text;
         }
 
+        private static void ApplyReadableLightStyle(TMP_Text text)
+        {
+            text.outlineColor = new Color(0f, 0f, 0f, 0.78f);
+            text.outlineWidth = 0.12f;
+        }
+
+        private static RawImage CreateRawImage(
+            string name,
+            Transform parent,
+            Texture texture)
+        {
+            GameObject imageObject = new(
+                name,
+                typeof(RectTransform),
+                typeof(CanvasRenderer),
+                typeof(RawImage));
+            RectTransform rect = imageObject.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+
+            RawImage image = imageObject.GetComponent<RawImage>();
+            image.texture = texture;
+            image.color = Color.white;
+            image.raycastTarget = false;
+            return image;
+        }
+
         private static Image CreateImage(string name, Transform parent, Color color)
         {
             GameObject imageObject = new(
@@ -429,9 +484,10 @@ namespace FilmInspiredGames.Burning
         {
             Font regularSource = Resources.Load<Font>("Fonts/Gaegu-Regular");
             Font boldSource = Resources.Load<Font>("Fonts/Gaegu-Bold");
-            if (regularSource == null || boldSource == null)
+            Font titleSource = Resources.Load<Font>("Fonts/Pristina");
+            if (regularSource == null || boldSource == null || titleSource == null)
             {
-                Debug.LogError("Gaegu 글꼴을 찾을 수 없음. Resources/Fonts 확인 필요.");
+                Debug.LogError("타이틀 UI 글꼴을 찾을 수 없음. Resources/Fonts 확인 필요.");
                 return;
             }
 
@@ -456,6 +512,17 @@ namespace FilmInspiredGames.Burning
                 AtlasPopulationMode.Dynamic,
                 true);
             boldFont.name = "Gaegu Bold Runtime";
+
+            titleFont = TMP_FontAsset.CreateFontAsset(
+                titleSource,
+                72,
+                7,
+                GlyphRenderMode.SDFAA,
+                1024,
+                1024,
+                AtlasPopulationMode.Dynamic,
+                true);
+            titleFont.name = "Pristina Runtime";
         }
 
         private static void EnsureEventSystem()
@@ -482,6 +549,11 @@ namespace FilmInspiredGames.Burning
             if (boldFont != null)
             {
                 Destroy(boldFont);
+            }
+
+            if (titleFont != null)
+            {
+                Destroy(titleFont);
             }
         }
     }
