@@ -12,6 +12,7 @@ namespace FilmInspiredGames.Burning
     {
         private enum Step
         {
+            Title,
             C01,
             C01ToC02,
             C02Playing,
@@ -59,7 +60,7 @@ namespace FilmInspiredGames.Burning
         [SerializeField] private UnityEvent onC04Started;
         [SerializeField] private UnityEvent onActCompleted;
 
-        private Step currentStep;
+        private Step currentStep = Step.Title;
         private Coroutine transitionRoutine;
 
         public event Action ActCompleted;
@@ -108,6 +109,13 @@ namespace FilmInspiredGames.Burning
         private void Start()
         {
             string requestedChapter = BurningChapterDebugRequest.Consume();
+            if (string.IsNullOrEmpty(requestedChapter))
+            {
+                PrepareTitle();
+                BurningTitleScreen.Show(this);
+                return;
+            }
+
             ShowC01();
             if (requestedChapter is "C02" or "C03" or "C04")
             {
@@ -186,6 +194,25 @@ namespace FilmInspiredGames.Burning
             }
 
             ShowC01();
+        }
+
+        public void StartNewGameFromTitle()
+        {
+            ShowC01();
+        }
+
+        private void PrepareTitle()
+        {
+            currentStep = Step.Title;
+            SetGroup(c01Group, false);
+            SetGroup(c02Group, false);
+            SetGroup(c03Group, false);
+            SetGroup(c04Group, false);
+            SetC03Frame(false, false);
+            c02Sequence?.StopSequence();
+            c04Sequence?.StopSequence();
+            SetFade(0f);
+            BurningContinuePrompt.Hide();
         }
 
         private void ShowC01()

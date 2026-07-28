@@ -30,6 +30,13 @@
 
 - 통합 플레이 씬: `Assets/Game/Burning/Scenes/Burning_Act1_Playable.unity`
 - 씬 재생성: `Tools > Burning > Build Act 1 Playable Scene`
+- 일반 실행 시 `Burn my nest` 타이틀 화면부터 시작
+- 타이틀 메뉴: 새로운 게임, 챕터, 종료
+- 새로운 게임 선택 시 저장 기록 초기화 후 `Chapter.1` 자막과 함께 C01 시작
+- 챕터 메뉴의 Chapter 01 선택 시 마지막 저장 챕터부터 이어서 시작
+- 타이틀 UI: `Assets/Game/Burning/Common/Scripts/BurningTitleScreen.cs`
+- 진행 저장: `Assets/Game/Burning/Common/Scripts/BurningProgress.cs`
+- 타이틀 글꼴: `Assets/Game/Burning/Resources/Fonts/`
 - C02 완료 전 C03 이동 차단
 - C01·C02·C03 전환 시점별 연출 신호 제공
 
@@ -41,7 +48,9 @@
 - 묶음 Playable의 중간 챕터도 앞 장면을 건너뛰고 바로 시작
 - C05는 구현 없음으로 버튼 목록에서 제외
 - 현재 재생 중인 챕터 버튼은 강조색 표시. 같은 버튼을 눌러 해당 챕터 재시작 가능
-- 디버그 시작값은 에디터에서 한 번만 사용. 일반 실행과 WebGL 빌드는 C01부터 시작
+- `Open Title`로 타이틀부터 재실행
+- 저장 위치 지정·초기화와 저장된 챕터 바로 실행 지원
+- 디버그 시작값은 에디터에서 한 번만 사용. 일반 실행과 WebGL 빌드는 타이틀부터 시작
 - `Chapter Transition Timing`에서 전체 챕터 전환의 Fade Out, Black Hold, Fade In 수정
 - 기본 전환 속도: Fade Out 0.65초, Black Hold 0.18초, Fade In 0.8초
 

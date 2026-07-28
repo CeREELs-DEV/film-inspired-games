@@ -10,6 +10,7 @@ namespace FilmInspiredGames.Burning.Editor
     public sealed class BurningChapterDebuggerWindow : EditorWindow
     {
         private const string PendingChapterKey = "FilmInspiredGames.Burning.PendingDebugChapter";
+        private const string TitleRequest = "TITLE";
         private const string SettingsFolderPath = "Assets/Game/Burning/Resources";
         private const string SettingsAssetPath = SettingsFolderPath + "/BurningChapterSettings.asset";
 
@@ -20,6 +21,15 @@ namespace FilmInspiredGames.Burning.Editor
             10, 11, 12, 13,
             14, 15, 16, 17,
             18, 19
+        };
+
+        private static readonly string[] AvailableChapterNames =
+        {
+            "C01", "C02", "C03", "C04",
+            "C06", "C07", "C08", "C09",
+            "C10", "C11", "C12", "C13",
+            "C14", "C15", "C16", "C17",
+            "C18", "C19"
         };
 
         private static readonly string[] ScenePaths =
@@ -48,6 +58,7 @@ namespace FilmInspiredGames.Burning.Editor
 
         private Vector2 scrollPosition;
         private bool settingsExpanded;
+        private int savedChapterIndex;
         private UnityEditor.Editor settingsEditor;
 
         [InitializeOnLoadMethod]
@@ -63,7 +74,7 @@ namespace FilmInspiredGames.Burning.Editor
         {
             BurningChapterDebuggerWindow window = GetWindow<BurningChapterDebuggerWindow>();
             window.titleContent = new GUIContent("Burning Chapters");
-            window.minSize = new Vector2(360f, 310f);
+            window.minSize = new Vector2(360f, 430f);
             window.Show();
         }
 
@@ -87,19 +98,36 @@ namespace FilmInspiredGames.Burning.Editor
             }
 
             SessionState.EraseString(PendingChapterKey);
-            EditorApplication.delayCall += () => StartChapter(pendingChapter);
+            EditorApplication.delayCall += () =>
+            {
+                if (pendingChapter == TitleRequest)
+                {
+                    StartTitle();
+                    return;
+                }
+
+                StartChapter(pendingChapter);
+            };
         }
 
         private void OnGUI()
         {
             scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
-            string currentChapter = GetCurrentValue("CurrentChapter", GetChapterFromSceneName());
+            bool titleVisible = IsTitleVisible();
+            string currentChapter = titleVisible
+                ? "Title"
+                : GetCurrentValue("CurrentChapter", GetChapterFromSceneName());
+            string currentState = titleVisible
+                ? "Title Screen"
+                : GetCurrentValue("CurrentState", Application.isPlaying ? "-" : "Idle");
 
             EditorGUILayout.LabelField("Current Progress", EditorStyles.boldLabel);
             EditorGUILayout.LabelField("Playable", SceneManager.GetActiveScene().name);
             EditorGUILayout.LabelField("Chapter", currentChapter);
-            EditorGUILayout.LabelField(
-                "State", GetCurrentValue("CurrentState", Application.isPlaying ? "-" : "Idle"));
+            EditorGUILayout.LabelField("State", currentState);
+
+            EditorGUILayout.Space(8f);
+            DrawTitleAndSaveControls();
 
             EditorGUILayout.Space(8f);
             EditorGUILayout.LabelField("Start Chapter", EditorStyles.boldLabel);
@@ -146,6 +174,64 @@ namespace FilmInspiredGames.Burning.Editor
             EditorGUILayout.EndScrollView();
         }
 
+        private void DrawTitleAndSaveControls()
+        {
+            bool hasSave = BurningProgress.HasSavedGame;
+            string latestChapter = hasSave ? BurningProgress.LatestChapter : "-";
+
+            EditorGUILayout.LabelField("Title & Save", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Saved", hasSave ? "Yes" : "No");
+            EditorGUILayout.LabelField("Latest", latestChapter);
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button("Open Title", GUILayout.Height(28f)))
+                {
+                    RequestTitle();
+                }
+
+                using (new EditorGUI.DisabledScope(!hasSave))
+                {
+                    if (GUILayout.Button("Continue Saved", GUILayout.Height(28f)))
+                    {
+                        RequestChapterName(latestChapter);
+                    }
+                }
+            }
+
+            savedChapterIndex = EditorGUILayout.Popup(
+                "Saved Chapter",
+                savedChapterIndex,
+                AvailableChapterNames);
+
+            using (new EditorGUI.DisabledScope(Application.isPlaying))
+            {
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    if (GUILayout.Button("Set Save"))
+                    {
+                        BurningProgress.Reset();
+                        BurningProgress.SaveChapter(AvailableChapterNames[savedChapterIndex]);
+                    }
+
+                    using (new EditorGUI.DisabledScope(!hasSave))
+                    {
+                        if (GUILayout.Button("Clear Save"))
+                        {
+                            BurningProgress.Reset();
+                        }
+                    }
+                }
+            }
+
+            if (Application.isPlaying)
+            {
+                EditorGUILayout.HelpBox(
+                    "저장 위치 변경과 초기화는 플레이 종료 후 사용",
+                    MessageType.Info);
+            }
+        }
+
         private void OnDisable()
         {
             if (settingsEditor != null)
@@ -161,7 +247,11 @@ namespace FilmInspiredGames.Burning.Editor
 
         private static void RequestChapter(int chapter)
         {
-            string chapterName = $"C{chapter:00}";
+            RequestChapterName($"C{chapter:00}");
+        }
+
+        private static void RequestChapterName(string chapterName)
+        {
             if (EditorApplication.isPlayingOrWillChangePlaymode)
             {
                 SessionState.SetString(PendingChapterKey, chapterName);
@@ -170,6 +260,18 @@ namespace FilmInspiredGames.Burning.Editor
             }
 
             StartChapter(chapterName);
+        }
+
+        private static void RequestTitle()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                SessionState.SetString(PendingChapterKey, TitleRequest);
+                EditorApplication.isPlaying = false;
+                return;
+            }
+
+            StartTitle();
         }
 
         private static void EnsureSettingsAsset()
@@ -229,6 +331,21 @@ namespace FilmInspiredGames.Burning.Editor
             EditorApplication.delayCall += () => EditorApplication.isPlaying = true;
         }
 
+        private static void StartTitle()
+        {
+            const string titleScenePath =
+                "Assets/Game/Burning/Scenes/Burning_Act1_Playable.unity";
+
+            if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+            {
+                return;
+            }
+
+            BurningChapterDebugRequest.Clear();
+            EditorSceneManager.OpenScene(titleScenePath);
+            EditorApplication.delayCall += () => EditorApplication.isPlaying = true;
+        }
+
         private static string GetCurrentValue(string propertyName, string fallback)
         {
             if (!Application.isPlaying)
@@ -268,6 +385,18 @@ namespace FilmInspiredGames.Burning.Editor
                 "Burning_C19_Playable" => "C19BlackoutController",
                 _ => string.Empty
             };
+        }
+
+        private static bool IsTitleVisible()
+        {
+            if (!Application.isPlaying)
+            {
+                return false;
+            }
+
+            BurningTitleScreen titleScreen =
+                FindFirstObjectByType<BurningTitleScreen>(FindObjectsInactive.Include);
+            return titleScreen != null && titleScreen.isActiveAndEnabled;
         }
 
         private static string GetChapterFromSceneName()
