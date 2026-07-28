@@ -100,8 +100,8 @@ namespace FilmInspiredGames.Burning
                 titleFont,
                 68f,
                 CreamColor,
-                TextAlignmentOptions.Left);
-            SetRect(title.rectTransform, new Vector2(0.11f, 0.68f), new Vector2(0.9f, 0.88f));
+                TextAlignmentOptions.Center);
+            SetRect(title.rectTransform, new Vector2(0.04f, 0.68f), new Vector2(0.96f, 0.88f));
             title.fontStyle = FontStyles.Bold;
             ApplyReadableLightStyle(title);
 
